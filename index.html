@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>失落的建築師手札 | V44.1 Ratio-Lock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2c2c2c; --accent: #8e7341; --paper: #f7f3e8; --rpg-bg: rgba(18, 18, 18, 0.96); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Noto Serif TC', serif; }
+        
+        #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
 
+        /* 全域過場遮蓋 */
+        #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.8s ease-in-out; }
+
+        .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; display: none !important; z-index: 10; }
+        .stage-layer.active { opacity: 1; display: block !important; pointer-events: auto; }
+
+        /* 背景控制 */
+        .bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index: 1; }
+        .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 1s; }
+        .in-game .bg-overlay { opacity: 1; }
+
+        /* [首頁] */
+        .init-nav-fixed { position: fixed; bottom: 8vh; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 100; }
+        .start-gate { padding: 16px 45px; border: 2.5px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; letter-spacing: 4px; cursor: pointer; border-radius: 8px; animation: breathe 2s infinite; font-size: 1.1rem; }
+        @keyframes breathe { 0%, 100% { box-shadow: 0 0 5px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } }
+
+        /* [進度條] */
+        .gp-header { position: absolute; top: 0; left: 0; width: 100%; padding: 25px 20px 10px; z-index: 500; }
+        .prog-container { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+        .prog-bar-main { display: flex; gap: 5px; width: 100%; height: 6px; }
+        .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
+
+        /* [核心修正：統一 16:9 比例鎖定] */
+        .gp-stage { width: 100%; height: 74vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 20; padding-top: 5vh; }
+        
+        .ratio-box {
+            width: 100%;
+            aspect-ratio: 16 / 9; /* 修正2：鎖定比例，防止與進度條重疊 */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-top: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .main-img { 
+            width: 100%; height: 100%; 
+            background-size: cover; background-position: center; 
+            filter: grayscale(1) blur(15px); opacity: 0; 
+            transition: 3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .main-img.revealed { filter: grayscale(0) blur(0); opacity: 1; }
+
+        /* 碎片動畫 - 適配 16:9 */
+        .puzzle-piece { 
+            position: absolute; width: 33.33%; height: 50%; 
+            background-size: cover; background-position: center; 
+            transition: all 2.2s cubic-bezier(0.23, 1, 0.32, 1); 
+            opacity: 0; z-index: 60; border: 0.5px solid rgba(255,255,255,0.1);
+        }
+
+        /* [對話框] */
+        .gp-footer { 
+            position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; 
+            background: var(--rpg-bg); border: 2px solid var(--accent); 
+            border-radius: 18px; z-index: 1000; padding: 22px; cursor: pointer;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; align-items: center;
+        }
+        .gp-footer::after {
+            content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
+            border: 1px solid rgba(142, 115, 65, 0.3); border-radius: 14px; pointer-events: none;
+        }
+        .gp-text-container { width: 100%; padding-left: 95px; z-index: 10; }
+        .text-body { font-size: 0.92rem; line-height: 1.7; color: #ffffff !important; letter-spacing: 0.8px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        /* [立繪] */
+        .gp-actor-frame { position: absolute; bottom: 18vh; left: 5px; width: 180px; height: 180px; z-index: 1100; pointer-events: none; }
+        .gp-actor { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }
+        .visible { opacity: 1 !important; visibility: visible !important; }
+
+        @keyframes moveForward { 0%, 100% { transform: translateX(0px); } 50% { transform: translateX(12px) translateY(-5px); } }
+        .is-moving { animation: moveForward 1s infinite ease-in-out !important; }
+
+        /* 地圖佈局 */
+        .map-grid { display: grid; grid-template-columns: 1fr; gap: 10px; width: 85%; }
+        .node { height: 46px; background: rgba(255,255,255,0.9); border: 1.5px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; }
+        .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+
+        .cmd-win { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid #2c2c2c; padding: 25px; z-index: 9999; display: none; border-radius: 12px; }
+        .arrow { position: absolute; bottom: 15px; right: 20px; color: var(--accent); animation: blink 1.2s infinite; display: none; }
+        @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="shutter"></div>
+<audio id="bgm" loop><source src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/bgm.mp3" type="audio/mpeg"></audio>
+<audio id="se-reveal"><source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg"></audio>
+
+<div id="viewport">
+    <img id="main-bg" src="https://i.meee.com.tw/HVp4AAn.jpg" class="bg-layer">
+    <div class="bg-overlay" id="main-overlay"></div>
+
+    <div id="stage-init" class="stage-layer active">
+        <div class="init-nav-fixed">
+            <div class="start-gate" onclick="Game.start()">進入遊戲 ENTER</div>
+            <div style="color:#fff; opacity:0.5; font-size:0.55rem; text-decoration:underline; cursor:pointer;" onclick="localStorage.clear(); location.reload();">[ 重置遊戲進度 ]</div>
+        </div>
+    </div>
+
+    <div id="stage-cine" class="stage-layer">
+        <div class="gp-stage" style="justify-content:flex-end; padding-bottom:5vh;">
+            <img id="cine-actor" class="gp-actor" style="width:280px; height:auto;">
+        </div>
+        <div class="gp-footer" id="cine-db" style="justify-content:center; text-align:center;">
+            <div id="cine-txt" class="text-body" style="width:100%; padding:0 10px;"></div>
+            <div class="arrow" id="cine-arrow">▼</div>
+        </div>
+    </div>
+
+    <div id="stage-gp" class="stage-layer">
+        <div class="gp-header">
+            <div class="prog-container">
+                <div id="prog-text" style="font-size:0.6rem; color:var(--accent); font-weight:700;">手稿回收進度 0/6</div>
+                <div class="prog-bar-main" id="prog-bar"></div>
+            </div>
+        </div>
+        <div class="gp-stage" id="gp-canvas"></div>
+        <div class="gp-actor-frame"><img id="gp-actor" class="gp-actor" src=""></div>
+        <div class="gp-footer" id="gp-db">
+            <div class="gp-text-container">
+                <div id="gp-txt" class="text-body"></div>
+            </div>
+            <div class="arrow" id="gp-arrow">▼</div>
+        </div>
+    </div>
+</div>
+
+<div class="cmd-win" id="cmd-win">
+    <h3 style="margin-top:0; font-size:1.1rem;">輸入考掘密鑰</h3>
+    <input type="tel" id="p-input" maxlength="4" placeholder="••••" inputmode="numeric" style="width:100%; border:2px solid #2c2c2c; padding:15px; text-align:center; font-size:1.8rem; margin-bottom:15px;">
+    <button style="width:100%; padding:15px; background:var(--primary); color:#fff; border:none; font-weight:700;" id="submit-btn">執行指令</button>
+</div>
+
+<script>
+    const ICONS = {
+        PANIC: 'https://i.meee.com.tw/4GhsHj4.png',
+        RUN: 'https://i.meee.com.tw/mcrAWeZ.png',
+        HAPPY: 'https://i.meee.com.tw/inZgaqz.png',
+        WINK: 'https://i.meee.com.tw/kpWUNTm.png',
+        SERIOUS: 'https://i.meee.com.tw/W68QVQQ.png',
+        SEARCH: 'https://i.meee.com.tw/hMzAOsN.png',
+        CRY: 'https://i.meee.com.tw/qBmX7A2.png'
+    };
+
+    const stationData = [
+        { id:0, name:'浸', f:'1F', code:'101', img:'https://i.meee.com.tw/geDpeqV.jpg', intro:['這層樓最接近大地。','水面與天空重疊時，時間才真正開始流動。'], info:['這是「浸」的草圖。'] },
+        { id:1, name:'煙', f:'2F', code:'201', img:'https://i.meee.com.tw/BZIsTuv.jpg', intro:['北投的煙，本無形狀。','但在這裡，它們被編織成牆。'], info:['格柵如煙幕般柔軟。'] },
+        { id:2, name:'泉', f:'2F', code:'202', img:'https://i.meee.com.tw/HmcWLsi.jpg', intro:['泉水流過百年，留下色彩。'], info:['以石材色階排列模擬泉湧。'] },
+        { id:3, name:'織', f:'5F', code:'501', img:'https://i.meee.com.tw/u68NeJC.jpg', intro:['歷史是一場編織。'], info:['交織的線條，縫合了過去。'] },
+        { id:4, name:'紋', f:'5F', code:'502', img:'https://i.meee.com.tw/dcXFFyF.jpg', intro:['有些印記，無法複製。'], info:['每一張陶片皆不同。'] },
+        { id:5, name:'岩', f:'6F', code:'601', img:'https://i.meee.com.tw/gK8hsfE.jpg', intro:['安山岩，沉默而厚實。'], info:['火山地質賦予的厚實禮物。'] }
+    ];
+
+    const Game = {
+        state: { solved: JSON.parse(localStorage.getItem('wsbt_solved') || '[]'), userName: '', curIdx: -1, lastFloor: 1, isTyping: false, isProcessing: false },
+
+        async setStage(id) {
+            const shutter = document.getElementById('shutter');
+            shutter.style.opacity = "1";
+            
+            // 修正1：轉場黑屏啟動時，立即物理清空展示區，防圖片閃回
+            const canvas = document.getElementById('gp-canvas');
+            if(canvas) canvas.innerHTML = ""; 
+            
+            document.getElementById('cine-actor').classList.remove('visible', 'is-moving');
+            document.getElementById('gp-actor').classList.remove('visible', 'is-moving');
+            await new Promise(r => setTimeout(r, 800));
+            
+            if (id !== 'stage-init') {
+                document.getElementById('main-bg').src = "https://i.meee.com.tw/ApxxBEa.jpg";
+                document.getElementById('viewport').classList.add('in-game');
+            } else {
+                document.getElementById('main-bg').src = "https://i.meee.com.tw/HVp4AAn.jpg";
+                document.getElementById('viewport').classList.remove('in-game');
+            }
+
+            document.querySelectorAll('.stage-layer').forEach(l => { 
+                l.classList.remove('active'); l.style.display = 'none !important'; 
+                const tx = l.querySelector('.text-body'); if(tx) tx.innerHTML = "";
+            });
+            const target = document.getElementById(id);
+            if(target) { target.style.display = 'block !important'; setTimeout(() => target.classList.add('active'), 20); }
+            shutter.style.opacity = "0";
+            await new Promise(r => setTimeout(r, 800));
+        },
+
+        start() { this.updateProg(); document.getElementById('bgm').play().catch(()=>{}); this.initPrologue(); },
+
+        async initPrologue() {
+            await this.setStage('stage-cine');
+            this.setMood('PANIC');
+            this.runSeq('CINE', ["（慌張）糟了！您好，我是飯店管家。","我不小心把設計師的手稿弄丟在飯店各層了..."], () => {
+                document.getElementById('cine-txt').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;"><p style="font-size:0.85rem;margin:0;color:#fff;">親愛的旅人，請協助我！您的姓名是？</p><input type="text" id="p-name" style="background:transparent;border:none;border-bottom:1.5px solid #fff;color:#fff;text-align:center;font-size:1.1rem;width:160px;" placeholder="旅人" autocomplete="off"><button style="background:var(--accent);color:#fff;border:none;padding:10px 25px;font-weight:700;font-size:0.85rem;cursor:pointer;border-radius:5px;" onclick="Game.submitName()">[ 開始尋找 ]</button></div>`;
+            });
+        },
+
+        submitName() { this.state.userName = document.getElementById('p-name').value || "旅人"; this.checkFinalOrMap(); },
+
+        async checkFinalOrMap() {
+            if(this.state.solved.length >= 6) {
+                await this.setStage('stage-gp');
+                this.finalAssembly();
+            } else { this.renderMap(); }
+        },
+
+        async renderMap() {
+            if(this.state.solved.length >= 6) { this.checkFinalOrMap(); return; }
+            await this.setStage('stage-gp');
+            this.state.isProcessing = false;
+            const canvas = document.getElementById('gp-canvas');
+            canvas.style.visibility = "visible";
+            canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
+            stationData.slice().reverse().forEach(s => {
+                const node = document.createElement('div');
+                node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`;
+                node.innerText = `${s.f} ${s.name}`;
+                node.onclick = (e) => {
+                    e.stopPropagation();
+                    if(this.state.isTyping || this.state.isProcessing) return;
+                    if(this.state.solved.includes(s.id)) { this.setMood('HAPPY'); this.sayGP(`「${s.name}」層的手稿已經回收囉！`); }
+                    else {
+                        if(parseInt(s.f) === this.state.lastFloor) {
+                            this.setMood('SEARCH'); this.sayGP("這層樓還有未破解的謎題，請努力找找...");
+                            setTimeout(() => this.goChapter(s.id), 2500);
+                        } else { this.handleTeleport(s.id); }
+                    }
+                };
+                document.getElementById('grid').appendChild(node);
+            });
+            this.updateProg();
+            this.setMood('HAPPY');
+            this.sayGP("要去哪一層樓找尋失落的手稿呢？");
+        },
+
+        async handleTeleport(idx) {
+            this.state.isProcessing = true;
+            await this.setStage('stage-cine');
+            this.setMood('RUN', true); 
+            this.runSeq('CINE', [`好的，我們前往 ${stationData[idx].f} 樓找尋手稿...`], async () => { this.state.lastFloor = parseInt(stationData[idx].f); this.goChapter(idx); });
+        },
+
+        async goChapter(idx) {
+            await this.setStage('stage-gp');
+            this.state.curIdx = idx;
+            this.setMood('SEARCH'); 
+            // 修正2：鎖定 16:9 比例
+            document.getElementById('gp-canvas').innerHTML = `
+                <div class="ratio-box">
+                    <div class="main-img" id="sk-img" style="background-image:url('${stationData[idx].img}')"></div>
+                </div>
+            `;
+            this.runSeq('GP', stationData[idx].intro, () => {
+                this.sayGP("請輸入密鑰，啟動顯影。");
+                setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').focus(); }, 800);
+            });
+        },
+
+        async checkAnswer() {
+            const val = document.getElementById('p-input').value;
+            const target = stationData[this.state.curIdx];
+            if(val === target.code) {
+                this.state.isProcessing = true; document.getElementById('cmd-win').style.display = "none";
+                document.getElementById('p-input').value = "";
+                if(!Game.state.solved.includes(target.id)) Game.state.solved.push(target.id);
+                this.updateProg();
+                this.setMood('HAPPY');
+                document.getElementById('se-reveal').play().catch(()=>{});
+                await this.sayGP(`太好了！找到第 ${this.state.solved.length} 張手稿！`);
+                if(document.getElementById('sk-img')) document.getElementById('sk-img').classList.add('revealed');
+                
+                setTimeout(() => { 
+                    this.setMood('SERIOUS'); 
+                    this.runSeq('GP', target.info, async () => { 
+                        // 修正1：直接進入物理清場流程
+                        if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); }
+                        else { await this.setStage('stage-gp'); this.renderMap(); }
+                    }); 
+                }, 4000);
+            } else { alert("密碼不正確"); }
+        },
+
+        async finalAssembly() {
+            const canvas = document.getElementById('gp-canvas');
+            const gpActor = document.getElementById('gp-actor');
+            gpActor.classList.remove('visible'); 
+            canvas.innerHTML = `<div class="ratio-box" id="puzz-box"></div>`;
+            const box = document.getElementById('puzz-box');
+            document.getElementById('gp-txt').innerText = "手稿重組中...";
+
+            const pos = [{t:'0%',l:'0%'}, {t:'0%',l:'33.3%'}, {t:'0%',l:'66.6%'}, {t:'50%',l:'0%'}, {t:'50%',l:'33.3%'}, {t:'50%',l:'66.6%'}];
+            for(let i=0; i<6; i++){
+                const p = document.createElement('div'); p.className = 'puzzle-piece'; 
+                p.style.backgroundImage = `url('${stationData[i].img}')`;
+                p.style.top = Math.random()*120 - 20 +'%'; p.style.left = Math.random()*120 - 20 +'%';
+                box.appendChild(p);
+                p.offsetHeight;
+                setTimeout(() => { p.style.opacity = 1; p.style.top = pos[i].t; p.style.left = pos[i].l; }, 400 * i); // 調慢速度
+            }
+
+            setTimeout(async () => {
+                // 修正3：最終大圖同樣鎖定 16:9
+                box.innerHTML = `<div class="main-img revealed" style="background-image:url('https://i.meee.com.tw/H9albU3.jpg'); background-size:contain; transition: opacity 4s, filter 4s;"></div>`;
+                this.setMood('CRY'); 
+                const seq = [`${this.state.userName}，太感謝你了！`,`謝謝你陪我一起找到手稿，` ];
+                this.runSeq('GP', seq, () => {
+                    this.setMood('WINK');
+                    this.runSeq('GP', [`這是一點小小的心意，請收下，`,`噓！不要告訴總經理喔！`], () => this.renderRedeem());
+                });
+            }, 8500);
+        },
+
+        async renderRedeem() {
+            await this.setStage('stage-cine');
+            this.setMood('WINK');
+            const el = document.getElementById('cine-txt');
+            if(el) el.innerHTML = `<p style="color:#fff;">請前往櫃台領取謝禮吧！</p><button style="display:block;margin:20px auto;background:var(--accent);color:#fff;border:none;padding:12px 30px;cursor:pointer;border-radius:5px;font-family:inherit;font-weight:700;" onclick="Game.staffCheck()">[ 櫃台核銷 ]</button>`;
+        },
+
+        setMood(mood, isMoving = false) {
+            const isCine = document.getElementById('stage-cine').classList.contains('active');
+            const el = isCine ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
+            if(el) {
+                el.src = ICONS[mood];
+                el.classList.remove('visible', 'is-moving');
+                void el.offsetWidth;
+                if(isMoving) el.classList.add('is-moving');
+                setTimeout(() => el.classList.add('visible'), 500);
+            }
+        },
+
+        async say(id, str) {
+            this.state.isTyping = true;
+            const el = document.getElementById(id);
+            if(el) { el.innerHTML = ""; for (let char of str.split("")) { el.innerHTML += char; await new Promise(r => setTimeout(r, 65)); } }
+            this.state.isTyping = false;
+            const arrow = document.getElementById(id.replace('txt','arrow'));
+            if(arrow) arrow.style.display = 'block';
+        },
+        sayGP(s) { return this.say('gp-txt', s); },
+
+        runSeq(mode, lines, callback) {
+            const dbId = mode === 'CINE' ? 'cine-db' : 'gp-db';
+            const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt';
+            let q = [...lines];
+            const next = async () => {
+                const db = document.getElementById(dbId);
+                if (db) db.onclick = null;
+                if (q.length > 0) { await this.say(txtId, q.shift()); if (db) db.onclick = next; }
+                else if(callback) callback();
+            };
+            next();
+        },
+
+        updateProg() {
+            const bar = document.getElementById('prog-bar'); 
+            const progTxt = document.getElementById('prog-text');
+            if(bar) {
+                bar.innerHTML = "";
+                for(let i=0; i<6; i++) {
+                    const unit = document.createElement('div');
+                    unit.className = 'prog-unit' + (i < this.state.solved.length ? ' filled' : '');
+                    bar.appendChild(unit);
+                }
+            }
+            if(progTxt) progTxt.innerText = `手稿回收進度 ${this.state.solved.length}/6`;
+            localStorage.setItem('wsbt_solved', JSON.stringify(this.state.solved));
+        },
+
+        staffCheck() {
+            document.getElementById('cmd-win').style.display = "block";
+            document.getElementById('p-input').type = "password";
+            document.getElementById('submit-btn').onclick = () => {
+                if(document.getElementById('p-input').value === "WSBT") { 
+                    document.getElementById('cmd-win').style.display = "none"; 
+                    const el = document.getElementById('cine-txt');
+                    if(el) el.innerHTML = `<div style="font-size:1.1rem;color:var(--accent);border:2px solid var(--accent);display:inline-block;padding:10px;transform:rotate(-10deg);font-weight:700;margin-bottom:15px;">已核銷</div><p style="color:#fff;">願初衷，隨您一同歸去。</p>`; 
+                } else alert("密碼錯誤");
+            };
+        }
+    };
+    document.getElementById('submit-btn').onclick = () => Game.checkAnswer();
+</script>
+</body>
+</html>
