@@ -10,8 +10,8 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Noto Serif TC', serif; }
         #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
-        #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.6s ease-in-out; }
-        
+        #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+
         .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; display: none !important; z-index: 10; }
         .stage-layer.active { opacity: 1; display: block !important; pointer-events: auto; }
         
@@ -20,7 +20,7 @@
         .in-game .bg-overlay { opacity: 1; }
 
         .init-nav-fixed { position: fixed; bottom: 8vh; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 100; }
-        .start-gate { padding: 16px 45px; border: 2px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; letter-spacing: 4px; cursor: pointer; border-radius: 8px; animation: breathe 2s infinite; font-size: 1.1rem; }
+        .start-gate { padding: 16px 45px; border: 2.5px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; letter-spacing: 4px; border-radius: 8px; animation: breathe 2s infinite; font-size: 1.1rem; cursor: pointer; }
         @keyframes breathe { 0%, 100% { box-shadow: 0 0 5px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } }
 
         .gp-header { position: absolute; top: 0; left: 0; width: 100%; padding: 25px 20px 10px; z-index: 500; }
@@ -28,38 +28,42 @@
         .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
         .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
 
-        /* [核心：1:1 比例鎖定] */
-        .gp-stage { width: 100%; height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 20; padding-top: 5vh; }
-        .ratio-box { width: 85%; aspect-ratio: 1 / 1; position: relative; border: 1px solid var(--accent); background: rgba(0,0,0,0.2); overflow: hidden; max-width: 350px; }
+        .gp-stage { width: 100%; height: 74vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 20; padding-top: 5vh; }
+        .ratio-box { width: 100%; aspect-ratio: 1 / 1; position: relative; overflow: hidden; background: rgba(0,0,0,0.1); }
         .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(15px); opacity: 0; transition: 3s ease; }
         .main-img.revealed { filter: grayscale(0) blur(0); opacity: 1; }
-
-        .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 2s cubic-bezier(0.23, 1, 0.32, 1); opacity: 0; z-index: 60; border: 0.5px solid rgba(255,255,255,0.1); }
+        .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 2.2s cubic-bezier(0.23, 1, 0.32, 1); opacity: 0; z-index: 60; }
 
         .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2px solid var(--accent); border-radius: 18px; z-index: 1000; padding: 22px; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; align-items: center; }
         .gp-footer::after { content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px solid rgba(142, 115, 65, 0.3); border-radius: 14px; pointer-events: none; }
         .gp-text-container { width: 100%; padding-left: 95px; z-index: 10; }
+        .cine-text-container { width: 100%; text-align: center; z-index: 10; }
         .text-body { font-size: 0.95rem; line-height: 1.6; color: #ffffff !important; letter-spacing: 0.8px; }
-        .text-body.fade-in { animation: rpgFade 0.8s forwards; }
+        .text-body.fade-in { animation: rpgFade 0.6s forwards; }
         @keyframes rpgFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .gp-actor-frame { position: absolute; bottom: 18vh; left: 5px; width: 180px; height: 180px; z-index: 1100; pointer-events: none; }
-        .gp-actor { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.5s ease; animation: breathing 3s infinite ease-in-out; }
-        @keyframes breathing { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-        @keyframes moveBumping { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
-        .is-moving { animation: moveBumping 0.5s infinite !important; }
+        /* 人物定位鎖定 */
+        .cine-actor-slot { position: absolute; bottom: 21vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; z-index: 1100; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
+        .gp-actor-slot { position: absolute; bottom: 18vh; left: 5px; width: 180px; height: 180px; z-index: 1100; pointer-events: none; }
+        
+        .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.5s; }
+        
+        /* 動畫類別 */
+        .is-breathing { animation: breathing 3s infinite ease-in-out; }
+        .is-moving { animation: moveBumping 0.9s infinite !important; }
+        
+        @keyframes breathing { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes moveBumping { 0%, 100% { transform: translateY(0px); } 50% { transform: translateX(5px) translateY(-15px); } }
         .visible { opacity: 1 !important; visibility: visible !important; }
 
         .map-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 85%; }
-        .node { height: 46px; background: rgba(255,255,255,0.95); border: 1.5px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; box-shadow: 0 3px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        .node { height: 46px; background: rgba(255,255,255,0.95); border: 1.5px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; cursor: pointer; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
 
         .promise-ink { color: var(--accent); font-weight: 700; border: 1px dashed var(--accent); padding: 8px 20px; border-radius: 20px; animation: inkGlow 2s infinite; margin-top: 10px; display: inline-block; cursor: pointer; }
         @keyframes inkGlow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; text-shadow: 0 0 10px var(--accent); } }
         .rpg-btn { background: var(--accent); color: #fff; border: none; padding: 10px 25px; font-weight: 700; cursor:pointer; border-radius: 5px; font-family: inherit; margin-top: 10px; }
         .cmd-win { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid #2c2c2c; padding: 25px; z-index: 9999; display: none; border-radius: 12px; }
-        .arrow { position: absolute; bottom: 15px; right: 20px; color: var(--accent); animation: blink 1.2s infinite; display: none; }
-        @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
         .input-lock { pointer-events: none !important; }
     </style>
 </head>
@@ -80,20 +84,25 @@
     </div>
 
     <div id="stage-cine" class="stage-layer">
-        <div class="gp-stage" style="justify-content:flex-end; padding-bottom:5vh;">
-            <img id="cine-actor" class="gp-actor" style="width:280px; height:auto;">
+        <div class="cine-actor-slot">
+            <img id="cine-actor" class="actor-img">
         </div>
-        <div class="gp-footer" id="cine-db" style="justify-content:center; text-align:center;">
-            <div id="cine-txt" class="text-body"></div>
-            <div class="arrow" id="cine-arrow">▼</div>
+        <div class="gp-footer" id="cine-db">
+            <div class="cine-text-container"><div id="cine-txt" class="text-body"></div></div>
+            <div class="arrow" id="cine-arrow" style="position:absolute; bottom:15px; right:20px; color:var(--accent); animation:blink 1.2s infinite; display:none;">▼</div>
         </div>
     </div>
 
     <div id="stage-gp" class="stage-layer">
         <div class="gp-header"><div class="prog-container"><div id="prog-text" style="font-size:0.6rem; color:var(--accent); font-weight:700; margin-bottom:5px;">手稿回收進度 0/6</div><div class="prog-bar-main" id="prog-bar"></div></div></div>
         <div class="gp-stage" id="gp-canvas"></div>
-        <div class="gp-actor-frame"><img id="gp-actor" class="gp-actor" src=""></div>
-        <div class="gp-footer" id="gp-db"><div class="gp-text-container"><div id="gp-txt" class="text-body"></div></div><div class="arrow" id="gp-arrow">▼</div></div>
+        <div class="gp-actor-slot">
+            <img id="gp-actor" class="actor-img">
+        </div>
+        <div class="gp-footer" id="gp-db">
+            <div class="gp-text-container"><div id="gp-txt" class="text-body"></div></div>
+            <div class="arrow" id="gp-arrow" style="position:absolute; bottom:15px; right:20px; color:var(--accent); animation:blink 1.2s infinite; display:none;">▼</div>
+        </div>
     </div>
 </div>
 
@@ -119,20 +128,27 @@
         
         async setStage(id) {
             const shutter = document.getElementById('shutter');
-            // 修正2：黑屏啟動前，立即物理清空展示內容防閃跳
-            if(document.getElementById('gp-canvas')) document.getElementById('gp-canvas').innerHTML = "";
-            shutter.style.opacity = "1";
-            await new Promise(r => setTimeout(r, 650));
+            shutter.style.opacity = "1"; 
+            await new Promise(r => setTimeout(r, 450));
             
-            if (id !== 'stage-init') { document.getElementById('main-bg').src = "https://i.meee.com.tw/ApxxBEa.jpg"; document.getElementById('viewport').classList.add('in-game'); }
-            else { document.getElementById('main-bg').src = "https://i.meee.com.tw/HVp4AAn.jpg"; document.getElementById('viewport').classList.remove('in-game'); }
+            if(document.getElementById('gp-canvas')) document.getElementById('gp-canvas').innerHTML = ""; 
             
-            document.querySelectorAll('.stage-layer').forEach(l => { l.classList.remove('active'); l.style.display = 'none !important'; });
+            if (id !== 'stage-init') {
+                document.getElementById('main-bg').src = "https://i.meee.com.tw/ApxxBEa.jpg";
+                document.getElementById('viewport').classList.add('in-game');
+            } else {
+                document.getElementById('main-bg').src = "https://i.meee.com.tw/HVp4AAn.jpg";
+                document.getElementById('viewport').classList.remove('in-game');
+            }
+            
+            document.querySelectorAll('.stage-layer').forEach(l => { 
+                l.classList.remove('active'); l.style.display = 'none !important'; 
+            });
             const target = document.getElementById(id);
-            if(target) { target.style.display = 'block !important'; target.classList.add('active'); }
+            if(target) { target.style.display = 'block !important'; void target.offsetWidth; target.classList.add('active'); }
             
             shutter.style.opacity = "0";
-            await new Promise(r => setTimeout(r, 650));
+            await new Promise(r => setTimeout(r, 400));
         },
 
         start() { this.updateProg(); const bgm = document.getElementById('bgm'); bgm.play().catch(()=>{}); document.addEventListener('visibilitychange', () => { if(document.hidden) bgm.pause(); else bgm.play(); }); this.initPrologue(); },
@@ -145,36 +161,47 @@
             });
         },
 
-        async stepHappy() { this.setMood('HAPPY'); await this.say('cine-txt', "太好了！我怎麼稱呼您呢？"); document.getElementById('cine-db').onclick = () => Game.stepInputName(); },
-        async stepInputName() { document.getElementById('cine-db').onclick = null; document.getElementById('cine-txt').innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" style="background:transparent;border:none;border-bottom:1.5px solid #fff;color:#fff;text-align:center;font-size:1.1rem;width:160px;" placeholder="您的姓名" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">開始尋找</button></div>`; },
+        async stepHappy() {
+            this.setMood('HAPPY');
+            await this.say('cine-txt', "太好了！我怎麼稱呼您呢？");
+            document.getElementById('cine-db').onclick = () => Game.stepInputName();
+        },
+
+        async stepInputName() {
+            document.getElementById('cine-db').onclick = null;
+            document.getElementById('cine-txt').innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" style="background:transparent;border:none;border-bottom:1.5px solid #fff;color:#fff;text-align:center;font-size:1.1rem;width:160px;" placeholder="您的姓名" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">開始尋找</button></div>`;
+        },
+
         submitName() { this.state.userName = document.getElementById('p-name').value || "旅人"; this.checkFinalOrMap(); },
         async checkFinalOrMap() { if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); } else { this.renderMap(); } },
         
         async renderMap() {
             await this.setStage('stage-gp');
             const canvas = document.getElementById('gp-canvas');
-            canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
+            canvas.style.visibility = "visible"; canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
             stationData.slice().reverse().forEach(s => {
                 const node = document.createElement('div'); node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`; node.innerText = `${s.f} ${s.name}`;
-                node.onclick = (e) => { e.stopPropagation(); if(this.state.isTyping) return; if(this.state.solved.includes(s.id)) { this.setMood('HAPPY'); this.sayGP(`「${s.name}」層的手稿已經回收囉！`); } else { if(parseInt(s.f) === this.state.lastFloor) { this.setMood('SEARCH'); this.sayGP("這層樓還有未破解的謎題..."); setTimeout(() => this.goChapter(s.id), 2000); } else { this.handleTeleport(s.id); } } };
+                node.onclick = (e) => { 
+                    e.stopPropagation(); if(this.state.isTyping) return; 
+                    if(this.state.solved.includes(s.id)) { this.setMood('HAPPY'); this.sayGP(`「${s.name}」層的手稿已經回收囉！`); } 
+                    else { if(parseInt(s.f) === this.state.lastFloor) { this.setMood('SEARCH'); this.sayGP("這層樓還有未破解的謎題..."); setTimeout(() => this.goChapter(s.id), 2000); } else { this.handleTeleport(s.id); } } 
+                };
                 document.getElementById('grid').appendChild(node);
             });
             this.updateProg(); this.setMood('HAPPY'); this.sayGP("要去哪一層樓找尋失落的手稿呢？");
         },
 
         async handleTeleport(idx) { 
-            // 修正1：移動動畫。先黑屏，在黑屏內切換立繪，防閃爍。
-            const shutter = document.getElementById('shutter');
-            shutter.style.opacity = "1";
-            await new Promise(r => setTimeout(r, 600));
-            this.setMood('RUN', true); // 此時立繪已經換好
             await this.setStage('stage-cine'); 
-            this.runSeq('CINE', [`好的，我們前往 ${stationData[idx].f} 樓找尋手稿...`], async () => { this.state.lastFloor = parseInt(stationData[idx].f); this.goChapter(idx); }); 
+            this.setMood('RUN', true); 
+            this.runSeq('CINE', [`好的，我們前往 ${stationData[idx].f} 樓找尋手稿...`], async () => { 
+                this.state.lastFloor = parseInt(stationData[idx].f); 
+                this.goChapter(idx); 
+            }); 
         },
 
         async goChapter(idx) { 
             await this.setStage('stage-gp'); this.state.curIdx = idx; this.setMood('SEARCH'); 
-            // 修正3：1:1 展示區
             document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div class="main-img" id="sk-img" style="background-image:url('${stationData[idx].img}')"></div></div>`; 
             this.runSeq('GP', stationData[idx].intro, () => { this.sayGP("請輸入密鑰，啟動顯影。"); setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').focus(); }, 800); }); 
         },
@@ -195,38 +222,56 @@
         async finalAssembly() {
             document.body.classList.add('input-lock');
             const canvas = document.getElementById('gp-canvas'); 
-            document.getElementById('gp-actor').classList.remove('visible'); 
+            // 修正：進入組裝，強行清除小管家狀態
+            document.getElementById('gp-actor').classList.remove('visible', 'is-moving', 'is-breathing');
+            
             canvas.innerHTML = `<div class="ratio-box" id="puzz-box"></div>`;
-            const box = document.getElementById('puzz-box');
             document.getElementById('gp-txt').innerText = "手稿重組中...";
             const pos = [{t:'0%',l:'0%'}, {t:'0%',l:'33.3%'}, {t:'0%',l:'66.6%'}, {t:'50%',l:'0%'}, {t:'50%',l:'33.3%'}, {t:'50%',l:'66.6%'}];
             for(let i=0; i<6; i++){
                 const p = document.createElement('div'); p.className = 'puzzle-piece'; p.style.backgroundImage = `url('${stationData[i].img}')`;
-                p.style.top = (Math.random()*160 - 30) +'%'; p.style.left = (Math.random()*160 - 30) +'%'; 
-                box.appendChild(p);
+                p.style.top = (Math.random()*160 - 30) +'%'; p.style.left = (Math.random()*160 - 30) +'%'; document.getElementById('puzz-box').appendChild(p);
                 setTimeout(() => { p.style.opacity = 1; p.style.top = pos[i].t; p.style.left = pos[i].l; }, 400 * i);
             }
             setTimeout(async () => {
-                // 修正3：組合圖同樣 1:1 浮現
-                box.innerHTML = `<div class="main-img revealed" style="background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; transition: opacity 4s, filter 4s;"></div>`;
+                document.getElementById('puzz-box').innerHTML = `<div class="main-img revealed" style="background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; transition: opacity 4s, filter 4s;"></div>`;
                 document.body.classList.remove('input-lock');
-                this.setMood('CRY'); 
+                
+                // 修正：結尾致謝前，強行重設管家狀態，確保不閃跳跑步動作
+                this.setMood('CRY', false); 
+                
                 this.runSeq('GP', [`${this.state.userName}，太感謝你了！`,`謝謝你陪我一起找到手稿，` ], () => {
-                    this.setMood('WINK'); this.runSeq('GP', [`這是一點小小的心意，請收下，`,`噓！不要告訴總經理喔！`], () => this.renderRedeem());
+                    this.setMood('WINK', false); 
+                    this.runSeq('GP', [`這是一點小小的心意，請收下，`,`噓！不要告訴總經理喔！`], () => this.renderRedeem());
                 });
-            }, 8000);
+            }, 8500);
         },
 
-        async renderRedeem() { await this.setStage('stage-cine'); this.setMood('WINK'); document.getElementById('cine-txt').innerHTML = `<p style="color:#fff; margin-bottom:15px;">請前往櫃台領取謝禮吧！</p><button class="rpg-btn" onclick="Game.staffCheck()">[ 櫃台核銷 ]</button>`; },
+        async renderRedeem() { 
+            await this.setStage('stage-cine'); 
+            this.setMood('WINK', false); 
+            document.getElementById('cine-txt').innerHTML = `<p style="color:#fff; margin-bottom:15px;">請前往櫃台領取謝禮吧！</p><button class="rpg-btn" onclick="Game.staffCheck()">[ 櫃台核銷 ]</button>`; 
+        },
         
+        /* 修正核心：setMood 狀態同步鎖 */
         setMood(mood, isMoving = false) {
             const isCine = document.getElementById('stage-cine').classList.contains('active');
             const el = isCine ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
             if(el) { 
+                // 1. 強行移除舊狀態與動畫，重置瀏覽器記憶
+                el.classList.remove('visible', 'is-moving', 'is-breathing');
+                el.style.animation = "none";
+                void el.offsetWidth; // 關鍵：強迫瀏覽器立刻渲染「乾淨」的狀態
+                
+                // 2. 設定新圖與新動畫
                 el.src = ICONS[mood]; 
-                el.classList.remove('visible', 'is-moving'); 
-                void el.offsetWidth;
-                if(isMoving) el.classList.add('is-moving'); 
+                if(isMoving) {
+                    el.classList.add('is-moving');
+                } else {
+                    el.classList.add('is-breathing');
+                }
+                
+                // 3. 淡入顯示
                 setTimeout(() => el.classList.add('visible'), 50); 
             }
         },
@@ -239,7 +284,7 @@
             el.classList.remove('fade-in'); void el.offsetWidth;
             el.innerHTML = str;
             el.classList.add('fade-in');
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 600));
             this.state.isTyping = false;
             if(arrow) arrow.style.display = 'block';
         },
