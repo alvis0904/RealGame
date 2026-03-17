@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V47.5</title>
+    <title>找尋失落的手稿 Lost Manuscript | V47.6</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -22,10 +22,12 @@
         .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; transition: opacity 1.5s ease-in-out, filter 1.5s ease-in-out; }
         .main-img.revealed { filter: grayscale(0) blur(0); opacity: 1; }
         .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 2s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0; z-index: 60; }
-        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 1000; padding: 20px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 1000; padding: 20px; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
         .gp-footer::after { content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px solid rgba(142, 115, 65, 0.2); border-radius: 14px; pointer-events: none; }
-        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff !important; letter-spacing: 1px; width: 100%; opacity: 0; }
-        .text-body.fade-in { opacity: 1; transition: opacity 0.7s; } /* 修正：移除 keyframes 改用 transition 確保穩定 */
+        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff !important; letter-spacing: 1px; width: 100%; opacity: 0; pointer-events: none; }
+        .text-body.fade-in { opacity: 1; transition: opacity 0.7s; }
+        .next-tip { position: absolute; bottom: 12px; right: 20px; color: var(--accent); font-size: 0.7rem; font-weight: 700; display: none; pointer-events: none; animation: tipBlink 1.5s infinite; }
+        @keyframes tipBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
         .cine-actor-slot { position: absolute; bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; z-index: 1100; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .gp-actor-slot { position: absolute; bottom: 18vh; left: 5px; width: 180px; height: 180px; z-index: 1100; pointer-events: none; }
         .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; visibility: hidden; }
@@ -39,8 +41,8 @@
         .map-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 85%; }
         .node { height: 48px; background: rgba(255,255,255,0.96); border: 1.5px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; cursor: pointer; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
-        .promise-ink { color: var(--accent); font-weight: 700; border: 1.5px dashed var(--accent); padding: 10px 25px; border-radius: 30px; margin-top: 15px; display: inline-block; cursor: pointer; }
-        .rpg-btn { background: var(--accent); color: #fff; border: none; padding: 12px 30px; font-weight: 700; cursor:pointer; border-radius: 6px; margin-top: 15px; }
+        .promise-ink { color: var(--accent); font-weight: 700; border: 1.5px dashed var(--accent); padding: 10px 25px; border-radius: 30px; margin-top: 15px; display: inline-block; cursor: pointer; pointer-events: auto; }
+        .rpg-btn { background: var(--accent); color: #fff; border: none; padding: 12px 30px; font-weight: 700; cursor:pointer; border-radius: 6px; margin-top: 15px; pointer-events: auto; }
         .cmd-win { position: fixed; top: 22%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid #2c2c2c; padding: 25px; z-index: 9999; display: none; border-radius: 12px; }
         .input-lock { pointer-events: none !important; cursor: default; }
     </style>
@@ -54,17 +56,20 @@
     <img id="main-bg" src="https://i.meee.com.tw/HVp4AAn.jpg" class="bg-layer">
     <div class="bg-overlay" id="main-overlay"></div>
     <div id="stage-init" class="stage-layer active">
-        <div class="init-nav-fixed"><div class="start-gate" onclick="Game.start()">進入遊戲 ENTER</div><div style="color:#fff; opacity:0.4; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="localStorage.clear(); location.reload();">[ 重置遊戲進度 ]</div></div>
+        <div class="init-nav-fixed">
+            <div class="start-gate" onclick="Game.start()">進入遊戲 ENTER</div>
+            <div style="color:#fff; opacity:0.4; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="localStorage.clear(); location.reload();">[ 重置遊戲進度 ]</div>
+        </div>
     </div>
     <div id="stage-cine" class="stage-layer">
         <div class="cine-actor-slot"><img id="cine-actor" class="actor-img"></div>
-        <div class="gp-footer" id="cine-db"><div id="cine-txt" class="text-body"></div></div>
+        <div class="gp-footer" id="cine-db"><div id="cine-txt" class="text-body"></div><div class="next-tip" id="cine-tip">下一步 ▼</div></div>
     </div>
     <div id="stage-gp" class="stage-layer">
         <div class="gp-header"><div id="prog-text" style="font-size:0.6rem; color:var(--accent); font-weight:700; margin-bottom:5px;">手稿回收進度 0/6</div><div class="prog-bar-main" id="prog-bar"></div></div>
         <div class="gp-stage" id="gp-canvas"></div>
         <div class="gp-actor-slot"><img id="gp-actor" class="actor-img"></div>
-        <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div></div>
+        <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div><div class="next-tip" id="gp-tip">下一步 ▼</div></div>
     </div>
 </div>
 
@@ -86,67 +91,41 @@
 
     const Game = {
         state: { solved: JSON.parse(localStorage.getItem('manuscript_solved') || '[]'), userName: '', curIdx: -1, lastFloor: 1, isTyping: false, completed: localStorage.getItem('manuscript_completed') === 'true' },
-        
         async setStage(id) {
             document.body.classList.add('input-lock');
             const shutter = document.getElementById('shutter');
             shutter.classList.add('active');
             await new Promise(r => setTimeout(r, 600)); 
-            
-            // 徹底清洗環境
             document.querySelectorAll('.actor-img').forEach(img => { img.src = ""; img.classList.remove('visible'); });
             const gpc = document.getElementById('gp-canvas'); if(gpc) { gpc.innerHTML = ""; gpc.style.display = "none"; }
             document.querySelectorAll('.text-body').forEach(t => { t.innerHTML = ""; t.classList.remove('fade-in'); }); 
-
+            document.querySelectorAll('.next-tip').forEach(t => t.style.display = "none");
             document.getElementById('viewport').classList.toggle('in-game', id !== 'stage-init');
             document.getElementById('main-bg').src = (id !== 'stage-init') ? "https://i.meee.com.tw/ApxxBEa.jpg" : "https://i.meee.com.tw/HVp4AAn.jpg";
             document.querySelectorAll('.stage-layer').forEach(l => { l.classList.remove('active'); l.style.display = 'none !important'; });
-            
             const target = document.getElementById(id);
-            if(target) { 
-                target.style.display = 'block !important'; 
-                if(id === 'stage-gp') gpc.style.display = "flex";
-                void target.offsetWidth; 
-                target.classList.add('active'); 
-            }
-            
+            if(target) { target.style.display = 'block !important'; if(id === 'stage-gp') gpc.style.display = "flex"; void target.offsetWidth; target.classList.add('active'); }
             await new Promise(r => setTimeout(r, 200));
             shutter.classList.remove('active');
             await new Promise(r => setTimeout(r, 400));
             document.body.classList.remove('input-lock');
-            return true; // 握手信號
         },
-
         start() { 
             if(this.state.completed) { this.renderRedeemed(); return; }
-            this.updateProg(); 
-            const bgm = document.getElementById('bgm'); 
-            bgm.play().catch(()=>{}); 
+            this.updateProg(); const bgm = document.getElementById('bgm'); bgm.play().catch(()=>{}); 
             document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') { if(document.body.classList.contains('in-game') && !bgm.muted) bgm.play().catch(()=>{}); } else { bgm.muted = true; bgm.pause(); } });
             this.initPrologue(); 
         },
-
         async initPrologue() {
-            await this.setStage('stage-cine'); 
-            this.setMood('PANIC');
-            this.runAutoSeq('CINE', [
-                "(哭泣聲)嗚嗚，我是飯店的管家小晶...",
-                "飯店最近要慶祝滿一周年，",
-                "想要展示設計師的珍貴手稿，",
-                "結果我...不小心把手稿用不見了...",
-                "好心的旅人，你願意陪我尋找嗎？"
-            ], () => {
-                const txt = document.getElementById('cine-txt');
-                txt.innerHTML += `<br><div class="promise-ink" onclick="Game.stepHappy()">觸摸螢幕達成約定</div>`;
-                txt.classList.add('fade-in');
+            await this.setStage('stage-cine'); this.setMood('PANIC');
+            this.runAutoSeq('CINE', ["(哭泣聲)嗚嗚，我是飯店的管家小晶...","飯店最近要慶祝滿一周年，","想要展示設計師的珍貴手稿，","結果我...不小心把手稿用不見了...","好心的旅人，你願意陪我尋找嗎？"], () => {
+                const txt = document.getElementById('cine-txt'); txt.innerHTML += `<br><div class="promise-ink" onclick="Game.stepHappy()">觸摸螢幕達成約定</div>`; txt.classList.add('fade-in');
             });
         },
-
-        async stepHappy() { this.setMood('HAPPY'); await this.say('cine-txt', "太好了！我該如何稱呼您呢？"); setTimeout(() => Game.stepInputName(), 1800); },
+        async stepHappy() { this.setMood('HAPPY'); await this.say('cine-txt', "太好了！我該如何稱呼您呢？", false); setTimeout(() => Game.stepInputName(), 1500); },
         async stepInputName() { const txt = document.getElementById('cine-txt'); txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" style="background:transparent;border:none;border-bottom:1.5px solid #fff;color:#fff;text-align:center;font-size:1.1rem;width:160px;" placeholder="您的姓名" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">開始尋找</button></div>`; txt.classList.add('fade-in'); },
         submitName() { this.state.userName = document.getElementById('p-name').value || "旅人"; this.checkFinalOrMap(); },
         async checkFinalOrMap() { if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); } else { this.renderMap(); } },
-
         async renderMap() {
             await this.setStage('stage-gp'); this.setMood('HAPPY');
             const canvas = document.getElementById('gp-canvas'); canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
@@ -161,45 +140,41 @@
             });
             this.updateProg(); this.sayGP("要去哪一層樓找尋失落的手稿呢？");
         },
-
+        /* [核心修正] 跑步時提供 下一步 讓客人決定 */
         async handleTeleport(idx) { 
             await this.setStage('stage-cine'); this.setMood('RUN'); 
-            this.runAutoSeq('CINE', [`好的，我們前往 ${stationData[idx].f} 樓找尋手稿...`], () => { 
-                document.body.classList.add('input-lock');
-                setTimeout(() => { this.state.lastFloor = parseInt(stationData[idx].f); this.goChapter(idx); }, 2800); 
-            }, 0); 
+            // 改回手動序列，最後一句顯示下一步
+            this.runManualSeq('CINE', [`好的，我們前往 ${stationData[idx].f} 樓找尋手稿...`], () => { 
+                this.state.lastFloor = parseInt(stationData[idx].f); 
+                this.goChapter(idx); 
+            }); 
         },
-
         async goChapter(idx) { 
             await this.setStage('stage-gp'); this.state.curIdx = idx; this.setMood('SEARCH'); 
             document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div class="main-img" id="sk-img" style="background-image:url('${stationData[idx].img}')"></div></div>`; 
             this.runAutoSeq('GP', stationData[idx].intro, () => { 
-                this.sayGP("請輸入密鑰，啟動顯影。"); setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').focus(); }, 1000); 
+                this.sayGP("請輸入密鑰，啟動顯影。", false); setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').focus(); }, 1000); 
             }); 
         },
-
         async checkAnswer() {
             const val = document.getElementById('p-input').value; const target = stationData[this.state.curIdx];
             if(val === target.code) {
                 document.getElementById('cmd-win').style.display = "none"; document.getElementById('p-input').value = "";
                 if(!Game.state.solved.includes(target.id)) Game.state.solved.push(target.id);
                 this.updateProg(); this.setMood('HAPPY'); document.getElementById('se-reveal').play().catch(()=>{});
-                await this.sayGP(`太好了！找到第 ${this.state.solved.length} 張手稿！`);
+                await this.sayGP(`太好了！找到第 ${this.state.solved.length} 張手稿！`, false);
                 if(document.getElementById('sk-img')) document.getElementById('sk-img').classList.add('revealed');
                 
+                // [核心修正] 說明結束後提供下一步，由客人點擊回地圖
                 setTimeout(() => { 
                     this.setMood('SERIOUS'); 
-                    this.runAutoSeq('GP', target.info, async () => { 
-                        document.body.classList.add('input-lock');
-                        setTimeout(async () => {
-                            if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); } 
-                            else { await this.setStage('stage-gp'); this.renderMap(); }
-                        }, 2000); 
+                    this.runManualSeq('GP', target.info, async () => { 
+                        if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); } 
+                        else { await this.setStage('stage-gp'); this.renderMap(); }
                     }); 
                 }, 2200);
-            } else { this.setMood('CRY'); this.sayGP("答案好像不對..."); document.getElementById('p-input').value = ""; }
+            } else { this.setMood('CRY'); this.sayGP("答案好像不對...", false); document.getElementById('p-input').value = ""; }
         },
-
         async finalAssembly() {
             document.body.classList.add('input-lock');
             const canvas = document.getElementById('gp-canvas'); document.querySelectorAll('.actor-img').forEach(img => img.classList.remove('visible'));
@@ -221,22 +196,18 @@
                 }, 1500);
             }, 4500);
         },
-
         async renderRedeem() { 
-            await this.setStage('stage-cine'); 
-            this.setMood('WINK'); 
+            await this.setStage('stage-cine'); this.setMood('WINK'); 
             const txt = document.getElementById('cine-txt');
             txt.innerHTML = `<p style="color:#fff; margin-bottom:15px;">請前往櫃台領取謝禮吧！</p><button class="rpg-btn" onclick="Game.staffCheck()">[ 櫃台核銷 ]</button>`;
             txt.classList.add('fade-in');
         },
-
         async renderRedeemed() { 
             await this.setStage('stage-cine'); this.setMood('WINK'); 
             const el = document.getElementById('cine-txt');
             el.innerHTML = `<div style="font-size:1.1rem;color:var(--accent);border:2px solid var(--accent);display:inline-block;padding:10px;transform:rotate(-10deg);font-weight:700;margin-bottom:15px;">已核銷</div><p style="color:#fff;">願初衷，隨您一同歸去。</p>`;
             el.classList.add('fade-in');
         },
-
         setMood(mood) {
             const isCine = document.getElementById('stage-cine').classList.contains('active');
             const el = isCine ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
@@ -246,37 +217,57 @@
                 setTimeout(() => { el.style.visibility = "visible"; el.classList.add('visible'); }, 50); 
             }
         },
-
-        async say(id, str) {
+        async say(id, str, showTip = false) {
             this.state.isTyping = true;
-            const el = document.getElementById(id);
-            el.classList.remove('fade-in'); 
-            void el.offsetWidth;
+            const el = document.getElementById(id); const tip = document.getElementById(id.replace('txt','tip'));
+            if(tip) tip.style.display = 'none';
+            el.classList.remove('fade-in'); void el.offsetWidth;
             el.innerHTML = str;
-            el.classList.add('fade-in'); 
-            await new Promise(r => setTimeout(r, 700)); 
-            this.state.isTyping = false;
+            // 握手確保：先寫入內容，0.05秒後掛載動畫
+            setTimeout(() => {
+                el.classList.add('fade-in');
+                setTimeout(() => {
+                    this.state.isTyping = false;
+                    if(showTip && tip && !document.body.classList.contains('input-lock')) tip.style.display = 'block';
+                }, 700);
+            }, 50);
         },
-        sayGP(s) { return this.say('gp-txt', s); },
-
-        runAutoSeq(mode, lines, callback, interval = 2200) {
+        sayGP(s, tip = false) { return this.say('gp-txt', s, tip); },
+        /* 自動劇本 */
+        runAutoSeq(mode, lines, callback) {
             document.body.classList.add('input-lock');
             const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt'; let q = [...lines];
             const next = async () => { 
                 if (q.length > 0) { 
-                    await this.say(txtId, q.shift());
-                    if(q.length > 0) setTimeout(next, interval); 
-                    else { if(interval !== 0) document.body.classList.remove('input-lock'); if(callback) callback(); }
-                } else { if(interval !== 0) document.body.classList.remove('input-lock'); if(callback) callback(); }
+                    await this.say(txtId, q.shift(), false);
+                    if(q.length > 0) setTimeout(next, 2200); 
+                    else { document.body.classList.remove('input-lock'); if(callback) callback(); }
+                } else { document.body.classList.remove('input-lock'); if(callback) callback(); }
             }; next();
         },
-
+        /* [新增] 手動序列：最後一句出現下一步，並由點擊驅動 callback */
+        runManualSeq(mode, lines, callback) {
+            const dbId = mode === 'CINE' ? 'cine-db' : 'gp-db';
+            const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt';
+            let q = [...lines];
+            const next = async () => {
+                const db = document.getElementById(dbId);
+                if (db) db.onclick = null;
+                if (q.length > 0) {
+                    const line = q.shift();
+                    const isLast = q.length === 0;
+                    await this.say(txtId, line, isLast); // 最後一句顯示下一步
+                    if (db) db.onclick = isLast ? () => { db.onclick = null; callback(); } : next;
+                }
+            };
+            next();
+        },
         updateProg() {
             const bar = document.getElementById('prog-bar');
             if(bar) { bar.innerHTML = ""; for(let i=0; i<6; i++) { const unit = document.createElement('div'); unit.className = 'prog-unit' + (i < this.state.solved.length ? ' filled' : ''); bar.appendChild(unit); } }
+            const txt = document.getElementById('prog-text'); if(txt) txt.innerText = `手稿回收進度 ${this.state.solved.length}/6`;
             localStorage.setItem('manuscript_solved', JSON.stringify(this.state.solved));
         },
-
         staffCheck() { 
             document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').type = "tel"; document.getElementById('p-input').inputMode = "numeric";
             document.getElementById('submit-btn').onclick = () => { 
