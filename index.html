@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V47.7 Fix</title>
+    <title>找尋失落的手稿 Lost Manuscript | V47.8 Final Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -26,12 +26,24 @@
         .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 1000; padding: 20px; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
         .gp-footer::after { content: ""; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px solid rgba(142, 115, 65, 0.2); border-radius: 14px; pointer-events: none; }
         
-        /* 修正：文字本體設為可穿透，讓內部的 Input 能接收點擊 */
         .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff !important; letter-spacing: 1px; width: 100%; opacity: 0; pointer-events: none; }
         .text-body.fade-in { opacity: 1; transition: opacity 0.7s; }
         
-        /* 修正：強制讓 Input 恢復點擊權限 */
-        input[type="text"], input[type="tel"] { pointer-events: auto !important; position: relative; z-index: 2000; }
+        /* [修正 1]：輸入框與互動區強制開啟點擊 */
+        .interactive-mode { pointer-events: auto !important; }
+        input[type="text"] { 
+            pointer-events: auto !important; 
+            background: transparent; 
+            border: none; 
+            border-bottom: 2px solid #fff; 
+            color: #fff; 
+            text-align: center; 
+            font-size: 1.2rem; 
+            width: 80%; 
+            padding: 10px 0;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
 
         .next-tip { position: absolute; bottom: 12px; right: 20px; color: var(--accent); font-size: 0.7rem; font-weight: 700; display: none; pointer-events: none; animation: tipBlink 1.5s infinite; }
         @keyframes tipBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
@@ -105,7 +117,7 @@
             await new Promise(r => setTimeout(r, 600)); 
             document.querySelectorAll('.actor-img').forEach(img => { img.src = ""; img.classList.remove('visible'); });
             const gpc = document.getElementById('gp-canvas'); if(gpc) { gpc.innerHTML = ""; gpc.style.display = "none"; }
-            document.querySelectorAll('.text-body').forEach(t => { t.innerHTML = ""; t.classList.remove('fade-in'); }); 
+            document.querySelectorAll('.text-body').forEach(t => { t.innerHTML = ""; t.classList.remove('fade-in', 'interactive-mode'); }); 
             document.querySelectorAll('.next-tip').forEach(t => t.style.display = "none");
             document.getElementById('viewport').classList.toggle('in-game', id !== 'stage-init');
             document.getElementById('main-bg').src = (id !== 'stage-init') ? "https://i.meee.com.tw/ApxxBEa.jpg" : "https://i.meee.com.tw/HVp4AAn.jpg";
@@ -126,18 +138,34 @@
         async initPrologue() {
             await this.setStage('stage-cine'); this.setMood('PANIC');
             this.runAutoSeq('CINE', ["(哭泣聲)嗚嗚，我是飯店的管家小晶...","飯店最近要慶祝滿一周年，","想要展示設計師的珍貴手稿，","結果我...不小心把手稿用不見了...","好心的旅人，你願意陪我尋找嗎？"], () => {
-                const txt = document.getElementById('cine-txt'); txt.innerHTML += `<br><div class="promise-ink" onclick="Game.stepHappy()">觸摸螢幕達成約定</div>`; txt.classList.add('fade-in');
+                const txt = document.getElementById('cine-txt'); 
+                txt.classList.add('interactive-mode'); // 開啟點擊
+                txt.innerHTML += `<br><div class="promise-ink" onclick="Game.stepHappy()">觸摸螢幕達成約定</div>`; txt.classList.add('fade-in');
             });
         },
         async stepHappy() { this.setMood('HAPPY'); await this.say('cine-txt', "太好了！我該如何稱呼您呢？", false); setTimeout(() => Game.stepInputName(), 1500); },
-        /* 修正：輸入姓名時的權限 */
+        /* [修正 2]：徹底解決 Chrome 無法點擊輸入姓名問題 */
         async stepInputName() { 
-            document.body.classList.remove('input-lock'); // 強制解鎖
-            const txt = document.getElementById('cine-txt'); 
-            txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" style="background:transparent;border:none;border-bottom:1.5px solid #fff;color:#fff;text-align:center;font-size:1.1rem;width:160px;" placeholder="您的姓名" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">開始尋找</button></div>`; 
+            document.body.classList.remove('input-lock');
+            const txt = document.getElementById('cine-txt');
+            txt.classList.add('interactive-mode'); // 強制開啟點擊權限
+            txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="請點擊輸入您的姓名" autocomplete="off" onfocus="this.placeholder=''"><br><button class="rpg-btn" id="name-submit-btn" onclick="Game.submitName()">開始尋找</button></div>`; 
             txt.classList.add('fade-in');
+            // 小技巧：延遲一點點時間自動 focus
+            setTimeout(() => { const input = document.getElementById('p-name'); if(input) input.focus(); }, 500);
         },
-        submitName() { this.state.userName = document.getElementById('p-name').value || "旅人"; this.checkFinalOrMap(); },
+        /* [修正 3]：強制要求輸入姓名 */
+        submitName() { 
+            const nameInput = document.getElementById('p-name');
+            const nameVal = nameInput.value.trim();
+            if(!nameVal) {
+                nameInput.style.borderBottom = "2px solid #ff4d4d";
+                nameInput.placeholder = "必須輸入姓名喔！";
+                return; // 卡關，不往下執行
+            }
+            this.state.userName = nameVal; 
+            this.checkFinalOrMap(); 
+        },
         async checkFinalOrMap() { if(this.state.solved.length >= 6) { await this.setStage('stage-gp'); this.finalAssembly(); } else { this.renderMap(); } },
         async renderMap() {
             await this.setStage('stage-gp'); this.setMood('HAPPY');
@@ -207,6 +235,7 @@
         async renderRedeem() { 
             await this.setStage('stage-cine'); this.setMood('WINK'); 
             const txt = document.getElementById('cine-txt');
+            txt.classList.add('interactive-mode');
             txt.innerHTML = `<p style="color:#fff; margin-bottom:15px;">請前往櫃台領取謝禮吧！</p><button class="rpg-btn" onclick="Game.staffCheck()">[ 櫃台核銷 ]</button>`;
             txt.classList.add('fade-in');
         },
@@ -273,12 +302,11 @@
             localStorage.setItem('manuscript_solved', JSON.stringify(this.state.solved));
         },
         staffCheck() { 
-            document.body.classList.remove('input-lock'); // 修正：核銷時解鎖
+            document.body.classList.remove('input-lock'); 
             document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').type = "tel"; document.getElementById('p-input').inputMode = "numeric";
             document.getElementById('submit-btn').onclick = () => { 
-                if(document.getElementById('p-input').value === "0415") { 
-                    document.getElementById('cmd-win').style.display = "none"; localStorage.setItem('manuscript_completed', 'true'); this.renderRedeemed(); 
-                } else alert("密碼錯誤"); 
+                if(document.getElementById('p-input').value === "0415") { document.getElementById('cmd-win').style.display = "none"; localStorage.setItem('manuscript_completed', 'true'); this.renderRedeemed(); } 
+                else alert("密碼錯誤"); 
             }; 
         }
     };
