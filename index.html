@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V68.2 UI Restored</title>
+    <title>找尋失落的手稿 Lost Manuscript | V68.3 Script Alignment</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Noto Serif TC', serif; }
         #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
-        
         #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; visibility: hidden; }
         #shutter.active { visibility: visible; opacity: 1; pointer-events: auto; }
         #loading-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 90001; text-align: center; display: none; pointer-events: none; }
@@ -28,6 +27,11 @@
         .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-out; }
         .actor-img.visible { opacity: 1 !important; visibility: visible !important; }
 
+        .gp-header { position: absolute; top: 0; left: 0; width: 100%; padding: 30px 20px; z-index: 9500; pointer-events: none; display: none; }
+        .prog-bar-main { display: flex; gap: 6px; width: 100%; height: 6px; margin-top: 5px; }
+        .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
+
         .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 40000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
         .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .text-body.fade-in { animation: pureFade 0.6s forwards; }
@@ -44,16 +48,17 @@
 
         .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 45000; display: none; border-radius: 12px; }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 15px; font-family: inherit; outline: none; border-radius: 0; }
-        
-        /* 移除灰底圖容器，恢復背景透明感 */
-        .gp-canvas-box { width:100%; height:72vh; display:flex; align-items:center; justify-content:center; position: relative; }
+
         .ratio-box { width: 100%; aspect-ratio: 1 / 1; position: relative; overflow: hidden; }
         .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; }
         .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 1.5s ease-in-out; }
+        .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 1.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0; z-index: 60; }
     </style>
 </head>
 <body>
 <div id="shutter"></div>
+<div id="loading-ui"><img src="https://i.meee.com.tw/Xp5JmBU.png" style="width:120px;height:120px;"><br><span style="color:var(--accent); letter-spacing:2px; font-size:0.8rem;">〔 記憶載入中... 〕</span></div>
+
 <audio id="bgm" loop><source src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/bgm.mp3" type="audio/mpeg"></audio>
 <audio id="se-reveal"><source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg"></audio>
 
@@ -72,9 +77,9 @@
     <div id="stage-gp" class="stage-layer">
         <div class="gp-header" id="gp-header" style="position:absolute; top:0; left:0; width:100%; padding:30px 20px; z-index:9500; display:none;">
             <div id="prog-text" style="font-size:0.65rem; color:var(--accent); font-weight:700;">手稿回收進度 0/6</div>
-            <div id="prog-bar" style="display:flex; gap:6px; height:6px; margin-top:5px;"></div>
+            <div id="prog-bar" class="prog-bar-main"></div>
         </div>
-        <div class="gp-canvas-box" id="gp-canvas"></div>
+        <div class="gp-stage" id="gp-canvas" style="width:100%; height:72vh; display:flex; align-items:center; justify-content:center; padding-top:50px;"></div>
         <div class="actor-slot gp-actor-slot"><img id="gp-actor" class="actor-img"></div>
         <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div><div class="next-tip" id="gp-tip">下一步 ▼</div></div>
     </div>
@@ -88,14 +93,25 @@
 </div>
 
 <script>
-    const ICONS = { SOB: 'https://i.meee.com.tw/PF2vL48.png', CRY: 'https://i.meee.com.tw/TLurp4f.png', THANKS: 'https://i.meee.com.tw/zMIVu6x.png', HELLO: 'https://i.meee.com.tw/CVowXAw.png', FIND: 'https://i.meee.com.tw/4XGSBDB.png', SHH: 'https://i.meee.com.tw/oTG4WZX.png' };
+    const ICONS = { 
+        SOB: 'https://i.meee.com.tw/PF2vL48.png', CRY: 'https://i.meee.com.tw/TLurp4f.png', THANKS: 'https://i.meee.com.tw/zMIVu6x.png', HELLO: 'https://i.meee.com.tw/CVowXAw.png', FIND: 'https://i.meee.com.tw/4XGSBDB.png', SHH: 'https://i.meee.com.tw/oTG4WZX.png',
+        READ: 'https://i.meee.com.tw/YVrLgG1.png', // 答對解說表情
+        DOUBT: 'https://i.meee.com.tw/TLurp4f.png' // 答錯疑惑/難過表情
+    };
+
     const stationData = [
-        {id:0,name:'1F 泉',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['泉，是一切的開始。']},
-        {id:1,name:'2F 煙',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙，是溫泉的呼吸。']},
-        {id:2,name:'2F 浸',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的獨特印記。']},
-        {id:3,name:'5F 織',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。']},
-        {id:4,name:'5F 紋',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。']},
-        {id:5,name:'6F 岩',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。']}
+        {id:0,name:'1F 泉',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['泉，是一切的開始。'],
+         intro:['這層樓、是飯店特有的休憩空間，','這裡有大眾風呂、也有戶外泳池，','能泡湯又能玩水，深受很多客人喜愛，','我們快找到寶箱吧！']},
+        {id:1,name:'2F 煙',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙，是溫泉的呼吸。'],
+         intro:['(userName)、您知道嗎？','這層樓其實是飯店的大廳，','我們每天都會在這裡迎接客人蒞臨，','所以…我想櫃台應該會有線索...']},
+        {id:2,name:'2F 浸',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的獨刻印記。'],
+         intro:['(userName)、您知道嗎？','這層樓其實是飯店的大廳，','我們每天都會在這裡迎接客人蒞臨，','所以…我想櫃台應該會有線索...']},
+        {id:3,name:'5F 織',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。'],
+         intro:['(userName)、這裡是飯店的湯屋接待區，','我們除了提供獨立湯屋服務外，','還能預約SPA體驗，讓身心好好放鬆，','我想...這裡應該也會有線索...']},
+        {id:4,name:'5F 紋',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。'],
+         intro:['(userName)、這裡是飯店的湯屋接待區，','我們除了提供獨立湯屋服務外，','還能預約SPA體驗，讓身心好好放鬆，','我想...這裡應該也會有線索...']},
+        {id:5,name:'6F 岩',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。'],
+         intro:['(userName)、是不是很少到六樓來？','在這層樓、客人能好好享受SPA服務，','所以…我們要小聲一點，努力找出線索喔！']}
     ];
 
     document.addEventListener("visibilitychange", () => {
@@ -105,7 +121,7 @@
     });
 
     const Game = {
-        state: { solved: [], userName: '', isBusy: false, musicPlaying: false, hintCount: 0 },
+        state: { solved: [], userName: '', isBusy: false, musicPlaying: false, hintCount: 0, lastFloor: -1 },
         
         async setStage(id) {
             document.getElementById('shutter').classList.add('active');
@@ -131,7 +147,7 @@
             ], () => {
                 setTimeout(() => {
                     const txt = document.getElementById('cine-txt');
-                    txt.innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫忙！</div>`;
+                    txt.innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
                 }, 2000);
             });
         },
@@ -139,8 +155,7 @@
         async acceptMission() { this.runManualSeq('CINE', [{m:'THANKS', t:'太感謝您了！'}, {m:'THANKS', t:'我要怎麼稱呼您呢？'}], () => this.stepInputName()); },
 
         async stepInputName() { 
-            const txt = document.getElementById('cine-txt');
-            document.getElementById('cine-tip').style.display = "none";
+            const txt = document.getElementById('cine-txt'); document.getElementById('cine-tip').style.display = "none";
             txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="輸入名稱" style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:160px;font-family:inherit;font-size:1.2rem;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">出發找手稿</button></div>`;
             txt.classList.add('fade-in'); setTimeout(() => document.getElementById('p-name').focus(), 300);
         },
@@ -157,54 +172,53 @@
                 const node = document.createElement('div');
                 node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`;
                 node.innerText = s.name;
-                node.onclick = () => { if(!this.state.isBusy && !this.state.solved.includes(s.id)) this.goChapter(s.id); };
+                node.onclick = () => { 
+                    if(this.state.isBusy) return;
+                    if(this.state.solved.includes(s.id)) this.sayGP("太好了！這一層的手稿已經找回來了！", 'HELLO'); 
+                    else {
+                        const curFloor = parseInt(s.name.split('F')[0]);
+                        if(this.state.lastFloor === curFloor) {
+                            this.runManualSeq('GP', [{m:'FIND', t:'這層樓還有未解開的線索...'}, {m:'FIND', t:'再努力找看看吧！'}], () => this.goChapter(s.id, true));
+                        } else { this.goChapter(s.id); }
+                    }
+                };
                 document.getElementById('grid').appendChild(node);
             });
-            this.sayGP("每一層樓，都藏著一個線索。你想去哪層呢？", 'HELLO');
+            if(this.state.solved.length === 6) {
+                this.runAutoSeq('GP', [{m:'THANKS', t:'終於收集完所有手稿了！'}], () => setTimeout(() => this.finalAssembly(), 1000));
+            } else {
+                this.sayGP("每一層樓，都藏著一個線索。你想去哪層呢？", 'HELLO');
+            }
         },
 
-        async goChapter(idx) {
-            await this.setStage('stage-gp'); this.state.curIdx = idx; this.state.hintCount = 0;
-            // [修正] 移除灰底佔位，直接顯示比例框
-            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
+        async goChapter(idx, skipLoader = false) {
+            await this.setStage('stage-gp');
+            this.state.curIdx = idx; this.state.hintCount = 0;
+            const data = stationData[idx];
+            this.state.lastFloor = parseInt(data.name.split('F')[0]);
+            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div id="sk-img" class="main-img" style="background-image:url('${data.img}')"></div></div>`;
             
-            this.runAutoSeq('GP', [
-                {m:'HELLO', t:'這層樓、是飯店特有的休憩空間，'}, {m:'HELLO', t:'這裡有大眾風呂、也有戶外泳池，'},
-                {m:'HELLO', t:'能泡湯又能玩水，深受很多客人喜愛，'}, {m:'HELLO', t:'我們快找到寶箱吧！'}
-            ], () => {
+            // [校準校準] 分層導覽對話 + 自動播放
+            const customizedIntro = data.intro.map(line => ({
+                m: 'HELLO',
+                t: line.replace('(userName)', this.state.userName).replace('(User name)', this.state.userName)
+            }));
+
+            this.runAutoSeq('GP', customizedIntro, () => {
                 this.sayGP("找到了！解開線索啟動顯影吧。", 'HELLO');
-                setTimeout(() => this.openPuzzleModal(), 1000);
+                setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; document.getElementById('p-input').focus(); }, 1000);
             });
         },
 
-        openPuzzleModal() {
-            const win = document.getElementById('cmd-win'); const input = document.getElementById('p-input');
-            input.value = ""; win.style.display = "block"; input.focus();
-            
-            document.getElementById('cmd-submit').onclick = () => {
-                if(input.value === stationData[this.state.curIdx].code) {
-                    win.style.display = "none"; this.solveSuccess();
-                } else {
-                    this.setMood('CRY'); this.sayGP("好像不太對……再看看周圍？");
-                }
-            };
-
-            // [修復回歸] 提示邏輯
-            document.getElementById('hint-btn').onclick = () => {
-                this.state.hintCount++;
-                const h = (this.state.hintCount % 2 !== 0) ? "試著看看你周圍的空間，答案就在附近。" : "可以留意牆面、地板或裝飾的細節喔。";
-                win.style.display = "none"; this.sayGP(h, 'FIND');
-                setTimeout(() => { win.style.display = "block"; }, 3000);
-            };
-        },
+        openPuzzleModal() { /* 已整合至 goChapter 結尾 */ },
 
         async solveSuccess() {
             const data = stationData[this.state.curIdx]; if(!this.state.solved.includes(data.id)) this.state.solved.push(data.id);
             this.updateProg(); document.getElementById('se-reveal').play().catch(()=>{});
             document.getElementById('sk-img').classList.add('revealed');
             this.runAutoSeq('GP', [{m:'THANKS', t:'太好了！手稿出現了！'}], () => {
-                // 顯示手稿故事
-                this.runAutoSeq('GP', data.story.map(s=>({m:'HELLO', t:s})), () => this.renderMap(), 2500);
+                // [表情校準] 解說故事使用 READ
+                this.runAutoSeq('GP', data.story.map(s=>({m:'READ', t:s})), () => this.renderMap(), 2500);
             }, 2500);
         },
 
@@ -239,11 +253,30 @@
         },
         runManualSeq(mode, lines, callback) {
             this.state.isBusy = false; const db = document.getElementById(mode === 'CINE' ? 'cine-db' : 'gp-db');
-            const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt';
-            const tip = document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip');
+            const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt'; const tip = document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip');
             let q = [...lines]; db.style.display = "flex";
             const next = async () => { if(tip) tip.style.display = 'none'; const line = q.shift(); await this.say(txtId, line.t, line.m); if (q.length > 0) { db.onclick = next; if(tip) tip.style.display = "block"; } else { db.onclick = callback; if(tip) tip.style.display = "block"; } }; next();
         }
+    };
+
+    // 密碼驗證邏輯
+    document.getElementById('cmd-submit').onclick = () => {
+        const inp = document.getElementById('p-input');
+        if(inp.value === stationData[Game.state.curIdx].code) {
+            document.getElementById('cmd-win').style.display = "none";
+            Game.solveSuccess();
+        } else {
+            // [表情校準] 答錯使用 DOUBT
+            Game.setMood('DOUBT');
+            Game.sayGP("好像不太對…再努力想一想？");
+        }
+    };
+    document.getElementById('hint-btn').onclick = () => {
+        Game.state.hintCount++;
+        const h = (Game.state.hintCount % 2 !== 0) ? "試著看看您周圍的空間，答案就在附近。" : "可以留意牆面、地板或裝飾的細節喔。";
+        document.getElementById('cmd-win').style.display = "none";
+        Game.sayGP(h, 'FIND');
+        setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; }, 3000);
     };
 </script>
 </body>
