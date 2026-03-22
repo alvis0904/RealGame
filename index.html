@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V68.1 System Fix</title>
+    <title>找尋失落的手稿 Lost Manuscript | V68.2 UI Restored</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -13,14 +13,15 @@
         
         #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; visibility: hidden; }
         #shutter.active { visibility: visible; opacity: 1; pointer-events: auto; }
-        
+        #loading-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 90001; text-align: center; display: none; pointer-events: none; }
+        #loading-ui.active { display: block; }
+
         .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; z-index: 10; transition: opacity 0.4s; }
         .stage-layer.active { opacity: 1 !important; visibility: visible !important; }
         .bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index: 1; }
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
         .in-game .bg-overlay { opacity: 1; }
 
-        /* [修復 4] 管家層級永遠在最上方 */
         .actor-slot { position: absolute; z-index: 50000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
         .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
@@ -43,11 +44,18 @@
 
         .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 45000; display: none; border-radius: 12px; }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 15px; font-family: inherit; outline: none; border-radius: 0; }
+        
+        /* 移除灰底圖容器，恢復背景透明感 */
+        .gp-canvas-box { width:100%; height:72vh; display:flex; align-items:center; justify-content:center; position: relative; }
+        .ratio-box { width: 100%; aspect-ratio: 1 / 1; position: relative; overflow: hidden; }
+        .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; }
+        .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 1.5s ease-in-out; }
     </style>
 </head>
 <body>
 <div id="shutter"></div>
 <audio id="bgm" loop><source src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/bgm.mp3" type="audio/mpeg"></audio>
+<audio id="se-reveal"><source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg"></audio>
 
 <div id="viewport">
     <img id="main-bg" src="https://i.meee.com.tw/HVp4AAn.jpg" class="bg-layer">
@@ -66,7 +74,7 @@
             <div id="prog-text" style="font-size:0.65rem; color:var(--accent); font-weight:700;">手稿回收進度 0/6</div>
             <div id="prog-bar" style="display:flex; gap:6px; height:6px; margin-top:5px;"></div>
         </div>
-        <div class="gp-stage" id="gp-canvas" style="width:100%; height:72vh; display:flex; align-items:center; justify-content:center;"></div>
+        <div class="gp-canvas-box" id="gp-canvas"></div>
         <div class="actor-slot gp-actor-slot"><img id="gp-actor" class="actor-img"></div>
         <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div><div class="next-tip" id="gp-tip">下一步 ▼</div></div>
     </div>
@@ -76,12 +84,20 @@
     <h3 id="cmd-title" style="margin-top:0; text-align:center;">輸入答案</h3>
     <input type="tel" id="p-input" class="cmd-input" maxlength="4" placeholder="••••" inputmode="numeric">
     <div class="rpg-btn" style="width:100%; background:var(--primary); color:#fff; border:none;" id="cmd-submit">驗證密碼</div>
+    <div class="rpg-btn" style="width:100%; border-style:dashed; font-size:0.85rem;" id="hint-btn">【需要提示嗎？】</div>
 </div>
 
 <script>
     const ICONS = { SOB: 'https://i.meee.com.tw/PF2vL48.png', CRY: 'https://i.meee.com.tw/TLurp4f.png', THANKS: 'https://i.meee.com.tw/zMIVu6x.png', HELLO: 'https://i.meee.com.tw/CVowXAw.png', FIND: 'https://i.meee.com.tw/4XGSBDB.png', SHH: 'https://i.meee.com.tw/oTG4WZX.png' };
-    
-    // [修復 5] 音樂離開視窗即暫停
+    const stationData = [
+        {id:0,name:'1F 泉',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['泉，是一切的開始。']},
+        {id:1,name:'2F 煙',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙，是溫泉的呼吸。']},
+        {id:2,name:'2F 浸',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的獨特印記。']},
+        {id:3,name:'5F 織',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。']},
+        {id:4,name:'5F 紋',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。']},
+        {id:5,name:'6F 岩',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。']}
+    ];
+
     document.addEventListener("visibilitychange", () => {
         const bgm = document.getElementById('bgm');
         if (document.hidden) bgm.pause();
@@ -89,7 +105,7 @@
     });
 
     const Game = {
-        state: { solved: [], userName: '', isBusy: false, musicPlaying: false },
+        state: { solved: [], userName: '', isBusy: false, musicPlaying: false, hintCount: 0 },
         
         async setStage(id) {
             document.getElementById('shutter').classList.add('active');
@@ -103,24 +119,15 @@
             await new Promise(r => setTimeout(r, 200)); document.getElementById('shutter').classList.remove('active');
         },
 
-        start() { 
-            this.state.musicPlaying = true;
-            document.getElementById('bgm').play().catch(()=>{}); 
-            this.initPrologue(); 
-        },
+        start() { this.state.musicPlaying = true; document.getElementById('bgm').play().catch(()=>{}); this.initPrologue(); },
 
         async initPrologue() {
             await this.setStage('stage-cine');
-            // [修復 1 & 2] 刪除「」，拆分詢問
             this.runAutoSeq('CINE', [
-                {m:'SOB', t:'（啜泣聲）嗚嗚嗚…'},
-                {m:'SOB', t:'您好，我是飯店的管家小晶…'},
-                {m:'SOB', t:'最近飯店要籌備滿一周年的活動，'},
-                {m:'SOB', t:'想要展示設計師珍貴的手稿，'},
-                {m:'SOB', t:'結果...我不小心弄丟了...'},
-                {m:'CRY', t:'（嚎啕大哭）嗚哇哇哇'},
-                {m:'SOB', t:'好心的旅人...'},
-                {m:'SOB', t:'您願意陪我一起找回手稿嗎？'}
+                {m:'SOB', t:'（啜泣聲）嗚嗚嗚…'}, {m:'SOB', t:'您好，我是飯店的管家小晶…'},
+                {m:'SOB', t:'最近飯店要籌備滿一周年的活動，'}, {m:'SOB', t:'想要展示設計師珍貴的手稿，'},
+                {m:'SOB', t:'結果...我不小心弄丟了...'}, {m:'CRY', t:'（嚎啕大哭）嗚哇哇哇'},
+                {m:'SOB', t:'好心的旅人...'}, {m:'SOB', t:'您願意陪我一起找回手稿嗎？'}
             ], () => {
                 setTimeout(() => {
                     const txt = document.getElementById('cine-txt');
@@ -129,19 +136,13 @@
             });
         },
 
-        async acceptMission() { 
-            this.runManualSeq('CINE', [
-                {m:'THANKS', t:'太感謝您了！'}, 
-                {m:'THANKS', t:'我要怎麼稱呼您呢？'}
-            ], () => this.stepInputName()); 
-        },
+        async acceptMission() { this.runManualSeq('CINE', [{m:'THANKS', t:'太感謝您了！'}, {m:'THANKS', t:'我要怎麼稱呼您呢？'}], () => this.stepInputName()); },
 
         async stepInputName() { 
             const txt = document.getElementById('cine-txt');
             document.getElementById('cine-tip').style.display = "none";
             txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="輸入名稱" style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:160px;font-family:inherit;font-size:1.2rem;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">出發找手稿</button></div>`;
-            txt.classList.add('fade-in');
-            setTimeout(() => document.getElementById('p-name').focus(), 300);
+            txt.classList.add('fade-in'); setTimeout(() => document.getElementById('p-name').focus(), 300);
         },
 
         submitName() { const n = document.getElementById('p-name').value.trim(); if(!n) return; this.state.userName = n; this.renderMap(); },
@@ -152,33 +153,70 @@
             this.updateProg();
             document.getElementById('gp-db').style.display = "flex";
             const canvas = document.getElementById('gp-canvas'); canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
-            [0,1,2,3,4,5].reverse().forEach(id => {
+            stationData.slice().reverse().forEach(s => {
                 const node = document.createElement('div');
-                node.className = `node ${this.state.solved.includes(id)?'solved':''}`;
-                node.innerText = `${id===0?'1F 泉':id===1?'2F 煙':id===2?'2F 浸':id===3?'5F 織':id===4?'5F 紋':'6F 岩'}`;
-                node.onclick = () => { if(!this.state.isBusy && !this.state.solved.includes(id)) this.goChapter(id); };
+                node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`;
+                node.innerText = s.name;
+                node.onclick = () => { if(!this.state.isBusy && !this.state.solved.includes(s.id)) this.goChapter(s.id); };
                 document.getElementById('grid').appendChild(node);
             });
             this.sayGP("每一層樓，都藏著一個線索。你想去哪層呢？", 'HELLO');
         },
 
         async goChapter(idx) {
-            await this.setStage('stage-gp');
-            this.state.curIdx = idx;
-            document.getElementById('gp-canvas').innerHTML = `<div style="width:100%;aspect-ratio:1/1;background:#333;"></div>`;
-            // [修復 3] 進入樓層改為自動播放
+            await this.setStage('stage-gp'); this.state.curIdx = idx; this.state.hintCount = 0;
+            // [修正] 移除灰底佔位，直接顯示比例框
+            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
+            
             this.runAutoSeq('GP', [
-                {m:'HELLO', t:'這層樓、是飯店特有的休憩空間，'},
-                {m:'HELLO', t:'這裡有大眾風呂、也有戶外泳池，'},
-                {m:'HELLO', t:'能泡湯又能玩水，深受很多客人喜愛，'},
-                {m:'HELLO', t:'我們快找到寶箱吧！'}
+                {m:'HELLO', t:'這層樓、是飯店特有的休憩空間，'}, {m:'HELLO', t:'這裡有大眾風呂、也有戶外泳池，'},
+                {m:'HELLO', t:'能泡湯又能玩水，深受很多客人喜愛，'}, {m:'HELLO', t:'我們快找到寶箱吧！'}
             ], () => {
                 this.sayGP("找到了！解開線索啟動顯影吧。", 'HELLO');
-                setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; }, 1000);
+                setTimeout(() => this.openPuzzleModal(), 1000);
             });
         },
 
-        /* ... 其餘邏輯同 V68.0 但移除文字中的「」 ... */
+        openPuzzleModal() {
+            const win = document.getElementById('cmd-win'); const input = document.getElementById('p-input');
+            input.value = ""; win.style.display = "block"; input.focus();
+            
+            document.getElementById('cmd-submit').onclick = () => {
+                if(input.value === stationData[this.state.curIdx].code) {
+                    win.style.display = "none"; this.solveSuccess();
+                } else {
+                    this.setMood('CRY'); this.sayGP("好像不太對……再看看周圍？");
+                }
+            };
+
+            // [修復回歸] 提示邏輯
+            document.getElementById('hint-btn').onclick = () => {
+                this.state.hintCount++;
+                const h = (this.state.hintCount % 2 !== 0) ? "試著看看你周圍的空間，答案就在附近。" : "可以留意牆面、地板或裝飾的細節喔。";
+                win.style.display = "none"; this.sayGP(h, 'FIND');
+                setTimeout(() => { win.style.display = "block"; }, 3000);
+            };
+        },
+
+        async solveSuccess() {
+            const data = stationData[this.state.curIdx]; if(!this.state.solved.includes(data.id)) this.state.solved.push(data.id);
+            this.updateProg(); document.getElementById('se-reveal').play().catch(()=>{});
+            document.getElementById('sk-img').classList.add('revealed');
+            this.runAutoSeq('GP', [{m:'THANKS', t:'太好了！手稿出現了！'}], () => {
+                // 顯示手稿故事
+                this.runAutoSeq('GP', data.story.map(s=>({m:'HELLO', t:s})), () => this.renderMap(), 2500);
+            }, 2500);
+        },
+
+        updateProg() {
+            const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
+            for(let i=0; i<6; i++) {
+                const unit = document.createElement('div');
+                unit.className = 'prog-unit' + (this.state.solved.includes(i) ? ' filled' : '');
+                bar.appendChild(unit);
+            }
+            document.getElementById('prog-text').innerText = `手稿回收進度 ${this.state.solved.length}/6`;
+        },
 
         setMood(mood) {
             const el = document.getElementById('stage-cine').classList.contains('active') ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
@@ -191,13 +229,13 @@
             await new Promise(r => setTimeout(r, 600));
         },
         sayGP(s, mood = null) { return this.say('gp-txt', s, mood); },
-        runAutoSeq(mode, lines, callback) {
+        runAutoSeq(mode, lines, callback, interval = 2500) {
             this.state.isBusy = true; const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt';
             const db = document.getElementById(mode === 'CINE' ? 'cine-db' : 'gp-db');
             if(document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip')) document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip').style.display = "none";
             db.style.display = "flex"; db.onclick = null;
             let q = [...lines];
-            const next = async () => { if (q.length > 0) { const line = q.shift(); await this.say(txtId, line.t, line.m); setTimeout(() => { if (q.length > 0) next(); else { this.state.isBusy = false; if(callback) callback(); } }, 2500); } }; next();
+            const next = async () => { if (q.length > 0) { const line = q.shift(); await this.say(txtId, line.t, line.m); setTimeout(() => { if (q.length > 0) next(); else { this.state.isBusy = false; if(callback) callback(); } }, interval); } }; next();
         },
         runManualSeq(mode, lines, callback) {
             this.state.isBusy = false; const db = document.getElementById(mode === 'CINE' ? 'cine-db' : 'gp-db');
@@ -205,14 +243,6 @@
             const tip = document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip');
             let q = [...lines]; db.style.display = "flex";
             const next = async () => { if(tip) tip.style.display = 'none'; const line = q.shift(); await this.say(txtId, line.t, line.m); if (q.length > 0) { db.onclick = next; if(tip) tip.style.display = "block"; } else { db.onclick = callback; if(tip) tip.style.display = "block"; } }; next();
-        },
-        updateProg() {
-            const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
-            for(let i=0; i<6; i++) {
-                const unit = document.createElement('div');
-                unit.style.flex = "1"; unit.style.background = this.state.solved.includes(i) ? "var(--accent)" : "rgba(255,255,255,0.2)";
-                bar.appendChild(unit);
-            }
         }
     };
 </script>
