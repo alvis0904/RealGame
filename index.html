@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V67.0 Brand First</title>
+    <title>找尋失落的手稿 Lost Manuscript | V67.1 UI Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -22,8 +22,8 @@
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
         .in-game .bg-overlay { opacity: 1; }
 
-        /* 立繪層級：提升權限 */
-        .actor-slot { position: absolute; z-index: 30000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
+        /* 立繪層級 */
+        .actor-slot { position: absolute; z-index: 20000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
         .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
         .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-out; }
@@ -34,25 +34,30 @@
         .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
         .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
 
-        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 15000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; min-height: 1.5em; position: relative; text-align: center; }
+        /* [核心修復] 對話框置中佈局加強 */
+        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 15000; padding: 15px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center !important; margin: 0 auto; }
         .text-body.fade-in { animation: pureFade 0.6s forwards; }
         @keyframes pureFade { from { opacity: 0; } to { opacity: 1; } }
         
-        .rpg-btn { display: inline-block; padding: 12px 35px; border: 2px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.2s; pointer-events: auto !important; margin-top: 10px; text-decoration: none; }
+        /* [核心修復] 下一步指示器層級頂天 */
+        .next-tip { position: absolute; bottom: 12px; right: 20px; color: var(--accent); font-size: 0.75rem; font-weight: 700; display: none; animation: tipBlink 1.5s infinite; pointer-events: none; z-index: 35000; }
+        @keyframes tipBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        .rpg-btn { display: inline-block; padding: 12px 35px; border: 2px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.2s; pointer-events: auto !important; margin-top: 10px; }
         
-        /* [修正] 地圖按鈕回歸暖白色質感 */
         .map-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 85%; margin: 0 auto; }
-        .node { height: 48px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .node { height: 48px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; font-weight: 700; cursor: pointer; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-        /* [關鍵] 自定義輸入視窗：宣紙風格，層級高於對話框 */
-        .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 88%; max-width: 400px; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 25000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        /* 輸入視窗層級修正 */
+        .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 30000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 15px; font-family: inherit; outline: none; border-radius: 0; }
 
         .ratio-box { width: 100%; aspect-ratio: 1 / 1; position: relative; overflow: hidden; }
         .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; }
         .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 1.5s ease-in-out; }
+        .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 1.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0; z-index: 60; }
     </style>
 </head>
 <body>
@@ -186,23 +191,19 @@
             const hintBtn = document.getElementById('hint-btn');
             if(document.getElementById('gp-tip')) document.getElementById('gp-tip').style.display = "none";
             
-            // [修正核心] 初始化輸入視窗，清空殘留
             input.value = ""; win.style.display = "block"; input.focus();
-            input.placeholder = redeemMode ? "櫃台工作人員專用" : "••••";
+            input.placeholder = redeemMode ? "櫃台核銷碼" : "••••";
 
             if(redeemMode) {
-                // 核銷模式：隱藏提示按鈕
                 document.getElementById('cmd-title').innerText = "櫃台核銷";
                 hintBtn.style.display = "none";
                 document.getElementById('cmd-submit').onclick = () => {
-                    // [假設核銷碼 0415]
                     if(input.value === "0415") {
                         win.style.display = "none";
                         localStorage.setItem('manuscript_completed', 'true'); this.renderRedeemed();
                     } else alert("密碼錯誤");
                 };
             } else {
-                // 遊戲模式：恢復正常設定
                 document.getElementById('cmd-title').innerText = "輸入答案";
                 hintBtn.style.display = "block";
                 document.getElementById('cmd-submit').onclick = () => {
@@ -254,26 +255,22 @@
 
         async renderRedeem() { 
             await this.setStage('stage-gp'); this.setMood('SOFT');
-            // [修正核心] 使用 HD 海報作為核銷畫面背景 ( Bug 3)
             document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/oD2jGIm.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; filter: none !important; opacity: 1 !important;"></div></div>`;
             document.getElementById('gp-db').style.display = "flex";
             document.getElementById('gp-txt').innerHTML = `<p style="color:#fff;">請將此畫面出示給櫃台人員。</p><div class="rpg-btn" onclick=\"Game.initStaffCheck()\">櫃台核銷</div>`; 
         },
 
-        /* [修正核心] 彻底废除 Native Prompt，统一用 CMD視窗 核銷 */
         initStaffCheck() { this.openPuzzleModal(true); },
 
         async renderRedeemed() {
             await this.setStage('stage-cine'); this.setMood('SOFT');
-            // [修正核心] 完成核銷畫面，使用品牌 HD 背景圖
             document.getElementById('main-bg').src = "https://i.meee.com.tw/oD2jGIm.jpg"; 
             document.getElementById('cine-db').style.display = "flex";
             document.getElementById('cine-txt').innerHTML = `<div style="font-size:1.3rem; color:var(--accent); border:2px solid var(--accent); display:inline-block; padding:10px; transform:rotate(-5deg); margin-bottom:20px;">已成功核銷</div><p style="color:#fff;">願這份初衷，隨您一同歸去。</p>`;
         },
 
         setMood(mood) {
-            const isCine = document.getElementById('stage-init').classList.contains('active') || document.getElementById('stage-cine').classList.contains('active');
-            const el = isCine ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
+            const el = document.getElementById('stage-cine').classList.contains('active') ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
             if(el && mood) { el.src = ICONS[mood]; el.classList.add('visible'); }
         },
         async say(id, str, mood = null) {
