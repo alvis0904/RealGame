@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V67.1 UI Fix</title>
+    <title>找尋失落的手稿 Lost Manuscript | V68.0 Updated Script</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Noto Serif TC', serif; }
         #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
-        
         #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; visibility: hidden; }
         #shutter.active { visibility: visible; opacity: 1; pointer-events: auto; }
         #loading-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 90001; text-align: center; display: none; pointer-events: none; }
@@ -22,7 +21,6 @@
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
         .in-game .bg-overlay { opacity: 1; }
 
-        /* 立繪層級 */
         .actor-slot { position: absolute; z-index: 20000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
         .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
@@ -34,14 +32,12 @@
         .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
         .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
 
-        /* [核心修復] 對話框置中佈局加強 */
-        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 15000; padding: 15px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center !important; margin: 0 auto; }
+        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 30000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .text-body.fade-in { animation: pureFade 0.6s forwards; }
         @keyframes pureFade { from { opacity: 0; } to { opacity: 1; } }
         
-        /* [核心修復] 下一步指示器層級頂天 */
-        .next-tip { position: absolute; bottom: 12px; right: 20px; color: var(--accent); font-size: 0.75rem; font-weight: 700; display: none; animation: tipBlink 1.5s infinite; pointer-events: none; z-index: 35000; }
+        .next-tip { position: absolute; bottom: 12px; right: 20px; color: var(--accent); font-size: 0.7rem; font-weight: 700; display: none; animation: tipBlink 1.5s infinite; pointer-events: none; z-index: 31000; }
         @keyframes tipBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         .rpg-btn { display: inline-block; padding: 12px 35px; border: 2px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.2s; pointer-events: auto !important; margin-top: 10px; }
@@ -50,8 +46,7 @@
         .node { height: 48px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; font-weight: 700; cursor: pointer; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-        /* 輸入視窗層級修正 */
-        .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 30000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .cmd-win { position: fixed; top: 18%; left: 50%; transform: translateX(-50%); width: 85%; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 25000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 15px; font-family: inherit; outline: none; border-radius: 0; }
 
         .ratio-box { width: 100%; aspect-ratio: 1 / 1; position: relative; overflow: hidden; }
@@ -99,8 +94,25 @@
 </div>
 
 <script>
-    const ICONS = { CRY: 'https://i.meee.com.tw/o3fEvEx.png', PANIC: 'https://i.meee.com.tw/FvQ6mgv.png', RELIEF: 'https://i.meee.com.tw/aPjfGxB.png', SMILE: 'https://i.meee.com.tw/JeWA9ZK.png', FOCUSED: 'https://i.meee.com.tw/Gk6svyO.png', SERIOUS: 'https://i.meee.com.tw/YVrLgG1.png', RUN: 'https://i.meee.com.tw/Xp5JmBU.png', SOFT: 'https://i.meee.com.tw/oTG4WZX.png' };
-    const stationData = [{id:0,name:'泉',f:'1F',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['泉，是一切的開始。']},{id:1,name:'煙',f:'2F',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙，是溫泉的呼吸。']},{id:2,name:'浸',f:'2F',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的獨刻印記。']},{id:3,name:'織',f:'5F',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。']},{id:4,name:'紋',f:'5F',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。']},{id:5,name:'岩',f:'6F',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。']}];
+    // 依據表格更新表情 ID 與 連結
+    const ICONS = { 
+        SOB: 'https://i.meee.com.tw/PF2vL48.png', 
+        CRY: 'https://i.meee.com.tw/TLurp4f.png', 
+        THANKS: 'https://i.meee.com.tw/zMIVu6x.png', 
+        HELLO: 'https://i.meee.com.tw/CVowXAw.png', 
+        FIND: 'https://i.meee.com.tw/4XGSBDB.png', 
+        SHH: 'https://i.meee.com.tw/oTG4WZX.png',
+        RUN: 'https://i.meee.com.tw/Xp5JmBU.png'
+    };
+
+    const stationData = [
+        {id:0,name:'泉',f:'1F',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['泉，是一切的開始。']},
+        {id:1,name:'煙',f:'2F',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙，是溫泉的呼吸。']},
+        {id:2,name:'浸',f:'2F',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的獨特印記。']},
+        {id:3,name:'織',f:'5F',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。']},
+        {id:4,name:'紋',f:'5F',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。']},
+        {id:5,name:'岩',f:'6F',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。']}
+    ];
 
     const Game = {
         state: { solved: JSON.parse(localStorage.getItem('manuscript_solved') || '[]'), userName: '', lastFloor: -1, isBusy: false, hintCount: 0, completed: localStorage.getItem('manuscript_completed') === 'true' },
@@ -128,21 +140,37 @@
 
         async initPrologue() {
             await this.setStage('stage-cine');
-            this.runAutoSeq('CINE', [{m:'CRY', t:'嗚……我是飯店的管家小晶……'},{m:'CRY', t:'我們準備一周年的設計手稿……不見了……'},{m:'CRY', t:'那些手稿，其實藏著這間飯店誕生的秘密。'},{m:'CRY', t:'如果找不回來，好像就少了一點什麼……'}], () => {
-                this.say('cine-txt', '你願意陪我一起找回來嗎？', 'PANIC');
+            // 依表格更新開場旁白
+            this.runAutoSeq('CINE', [
+                {m:'SOB', t:'「（啜泣聲）嗚嗚嗚…」'},
+                {m:'SOB', t:'「您好，我是飯店的管家小晶…」'},
+                {m:'SOB', t:'「不好意思讓您看笑話了...」'},
+                {m:'SOB', t:'「最近飯店要籌備滿一周年的活動，」'},
+                {m:'SOB', t:'「想要展示設計師珍貴的手稿，」'},
+                {m:'SOB', t:'「結果...我不小心弄丟了...」'},
+                {m:'CRY', t:'「（嚎啕大哭）嗚哇哇哇」'}
+            ], () => {
+                this.say('cine-txt', '「好心的旅人，您願意陪我一起找出手稿嗎？」', 'SOB');
                 setTimeout(() => {
                     const txt = document.getElementById('cine-txt');
-                    txt.innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
+                    txt.innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫忙！</div>`;
                 }, 2000);
             }, 2500);
         },
 
-        async acceptMission() { this.runManualSeq('CINE', [{m:'RELIEF', t:'太感謝你了！'}, {m:'RELIEF', t:'我要怎麼稱呼你呢？'}], () => this.stepInputName()); },
+        async acceptMission() { 
+            this.runManualSeq('CINE', [
+                {m:'THANKS', t:'「太感謝您了！」'}, 
+                {m:'THANKS', t:'「我要怎麼稱呼您呢？」'}
+            ], () => this.stepInputName()); 
+        },
 
         async stepInputName() { 
-            const txt = document.getElementById('cine-txt'); document.getElementById('cine-tip').style.display = "none";
+            const txt = document.getElementById('cine-txt');
+            document.getElementById('cine-tip').style.display = "none";
             txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="輸入名稱" style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:160px;font-family:inherit;font-size:1.2rem;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">出發找手稿</button></div>`;
-            txt.classList.add('fade-in'); setTimeout(() => document.getElementById('p-name').focus(), 300);
+            txt.classList.add('fade-in');
+            setTimeout(() => document.getElementById('p-name').focus(), 300);
         },
 
         submitName() { const n = document.getElementById('p-name').value.trim(); if(!n) return; this.state.userName = n; this.renderMap(); },
@@ -156,21 +184,20 @@
                 const node = document.createElement('div'); node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`; node.innerText = `${s.f} ${s.name}`;
                 node.onclick = () => { 
                     if(this.state.isBusy) return;
-                    if(this.state.solved.includes(s.id)) this.sayGP("這一層的手稿，我們已經找回來了。", 'SMILE'); 
+                    if(this.state.solved.includes(s.id)) this.sayGP("「太好了！這一層的手稿已經找回來了！」", 'HELLO'); 
                     else {
                         const curFloor = parseInt(s.f);
                         if(this.state.lastFloor === curFloor) {
-                            this.sayGP("這層樓還有未解開的線索...", 'FOCUSED');
-                            setTimeout(() => this.goChapter(s.id, true, true), 1200);
+                            this.runManualSeq('GP', [{m:'FIND', t:'「這層樓還有未解開的線索...」'}, {m:'FIND', t:'「再努力找看看吧！」'}], () => this.goChapter(s.id, true, true));
                         } else { this.goChapter(s.id); }
                     }
                 };
                 document.getElementById('grid').appendChild(node);
             });
             if(this.state.solved.length === 6) {
-                this.runAutoSeq('GP', [{m:'SMILE', t:'終於收集完所有手稿了！'}], () => setTimeout(() => this.finalAssembly(), 1000));
+                this.runAutoSeq('GP', [{m:'THANKS', t:'「終於收集完所有手稿了！」'}], () => setTimeout(() => this.finalAssembly(), 1000));
             } else {
-                this.sayGP("每一層樓，都藏著一個線索。你想去哪層呢？", 'SMILE');
+                this.sayGP("「每一層樓，都藏著一個線索。你想去哪層呢？」", 'HELLO');
             }
         },
 
@@ -179,9 +206,17 @@
             this.state.curIdx = idx; this.state.hintCount = 0; this.state.lastFloor = parseInt(stationData[idx].f);
             document.getElementById('gp-header').style.display = "block";
             document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
-            let seq = sameFloor ? [{m:'FOCUSED', t:'我們快找到寶箱吧。'}] : [{m:'FOCUSED', t:'這層樓，好像有點不一樣……'}, {m:'FOCUSED', t:'我們快找到寶箱吧。'}];
+            
+            // 依據表格更新初探對白
+            let seq = sameFloor ? [{m:'FIND', t:'「我們快找到寶箱吧！」'}] : [
+                {m:'HELLO', t:'「這層樓、是飯店特有的休憩空間，」'},
+                {m:'HELLO', t:'「這裡有大眾風呂、也有戶外泳池，」'},
+                {m:'HELLO', t:'「能泡湯又能玩水，深受很多客人喜愛，」'},
+                {m:'HELLO', t:'「我們快找到寶箱吧！」'}
+            ];
+            
             this.runManualSeq('GP', seq, () => {
-                this.sayGP("找到了！解開線索啟動顯影吧。", 'SMILE');
+                this.sayGP("「找到了！解開線索啟動顯影吧。」", 'HELLO');
                 setTimeout(() => this.openPuzzleModal(), 1000);
             });
         },
@@ -190,31 +225,24 @@
             const win = document.getElementById('cmd-win'); const input = document.getElementById('p-input');
             const hintBtn = document.getElementById('hint-btn');
             if(document.getElementById('gp-tip')) document.getElementById('gp-tip').style.display = "none";
-            
             input.value = ""; win.style.display = "block"; input.focus();
-            input.placeholder = redeemMode ? "櫃台核銷碼" : "••••";
+            input.placeholder = redeemMode ? "櫃台工作人員專用" : "••••";
 
             if(redeemMode) {
-                document.getElementById('cmd-title').innerText = "櫃台核銷";
-                hintBtn.style.display = "none";
+                document.getElementById('cmd-title').innerText = "櫃台核銷"; hintBtn.style.display = "none";
                 document.getElementById('cmd-submit').onclick = () => {
-                    if(input.value === "0415") {
-                        win.style.display = "none";
-                        localStorage.setItem('manuscript_completed', 'true'); this.renderRedeemed();
-                    } else alert("密碼錯誤");
+                    if(input.value === "0415") { win.style.display = "none"; localStorage.setItem('manuscript_completed', 'true'); this.renderRedeemed(); } else alert("密碼錯誤");
                 };
             } else {
-                document.getElementById('cmd-title').innerText = "輸入答案";
-                hintBtn.style.display = "block";
+                document.getElementById('cmd-title').innerText = "輸入答案"; hintBtn.style.display = "block";
                 document.getElementById('cmd-submit').onclick = () => {
-                    if(input.value === stationData[this.state.curIdx].code) {
-                        win.style.display = "none"; this.solveSuccess();
-                    } else { this.setMood('CRY'); this.sayGP("好像不太對……再看看周圍？"); }
+                    if(input.value === stationData[this.state.curIdx].code) { win.style.display = "none"; this.solveSuccess(); }
+                    else { this.setMood('CRY'); this.sayGP("「好像不太對……再看看周圍？」"); }
                 };
                 hintBtn.onclick = () => {
                     this.state.hintCount++;
                     const h = (this.state.hintCount % 2 !== 0) ? "試著看看你周圍的空間，答案就在附近。" : "可以留意牆面、地板或裝飾的細節喔。";
-                    win.style.display = "none"; this.sayGP(h, 'FOCUSED');
+                    win.style.display = "none"; this.sayGP(h, 'FIND');
                     setTimeout(() => { win.style.display = "block"; }, 3000);
                 };
             }
@@ -224,7 +252,7 @@
             const data = stationData[this.state.curIdx]; if(!this.state.solved.includes(data.id)) this.state.solved.push(data.id);
             this.updateProg(); document.getElementById('se-reveal').play().catch(()=>{});
             document.getElementById('sk-img').classList.add('revealed');
-            this.runAutoSeq('GP', [{m:'RELIEF', t:'太好了！手稿出現了！'}], () => {
+            this.runAutoSeq('GP', [{m:'THANKS', t:'「太好了！手稿出現了！」'}], () => {
                 this.runAutoSeq('GP', data.story.map(l => ({m:'SERIOUS', t:l})), () => this.renderMap(), 2500);
             }, 2500);
         },
@@ -241,12 +269,17 @@
             setTimeout(() => {
                 document.getElementById('puzz-box').style.opacity = "0"; document.getElementById('puzz-box').style.transition = "opacity 1.5s";
                 setTimeout(() => {
-                    document.getElementById('puzz-box').innerHTML = `<div id="final-master" style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; opacity:0; transition:opacity 2s; border: 4px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.8);"></div>`;
+                    document.getElementById('puzz-box').innerHTML = `<div id="final-master" style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; opacity:0; transition:opacity 2s; border: 4px solid #fff;"></div>`;
                     document.getElementById('puzz-box').style.opacity = "1";
                     setTimeout(() => {
                         const m = document.getElementById('final-master'); if(m) m.style.opacity = "1";
                         setTimeout(() => {
-                            this.runAutoSeq('GP', [{m:'SMILE', t:'我們找回所有手稿了！'},{m:'SMILE', t:`${this.state.userName}，謝謝你陪我完成一周年慶祝。`},{m:'SMILE', t:'這是一點小小心意，請收下。'},{m:'SOFT', t:'……這件事，就當我們的秘密吧。'}], () => this.renderRedeem());
+                            this.runAutoSeq('GP', [
+                                {m:'HELLO', t:'「我們找回所有手稿了！」'},
+                                {m:'THANKS', t:`「${this.state.userName}，謝謝您陪我一起完成手稿收集任務。」`},
+                                {m:'HELLO', t:'「這是一點小小心意，請收下。」'},
+                                {m:'SHH', t:'「……這件事，就當我們的秘密吧。」'}
+                            ], () => this.renderRedeem());
                         }, 2500);
                     }, 100);
                 }, 1500);
@@ -254,7 +287,7 @@
         },
 
         async renderRedeem() { 
-            await this.setStage('stage-gp'); this.setMood('SOFT');
+            await this.setStage('stage-gp'); this.setMood('SHH');
             document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/oD2jGIm.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; filter: none !important; opacity: 1 !important;"></div></div>`;
             document.getElementById('gp-db').style.display = "flex";
             document.getElementById('gp-txt').innerHTML = `<p style="color:#fff;">請將此畫面出示給櫃台人員。</p><div class="rpg-btn" onclick=\"Game.initStaffCheck()\">櫃台核銷</div>`; 
@@ -263,7 +296,7 @@
         initStaffCheck() { this.openPuzzleModal(true); },
 
         async renderRedeemed() {
-            await this.setStage('stage-cine'); this.setMood('SOFT');
+            await this.setStage('stage-cine'); this.setMood('SHH');
             document.getElementById('main-bg').src = "https://i.meee.com.tw/oD2jGIm.jpg"; 
             document.getElementById('cine-db').style.display = "flex";
             document.getElementById('cine-txt').innerHTML = `<div style="font-size:1.3rem; color:var(--accent); border:2px solid var(--accent); display:inline-block; padding:10px; transform:rotate(-5deg); margin-bottom:20px;">已成功核銷</div><p style="color:#fff;">願這份初衷，隨您一同歸去。</p>`;
