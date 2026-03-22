@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V68.5 Script Final</title>
+    <title>找尋失落的手稿 Lost Manuscript | V69.0 Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -21,7 +21,7 @@
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
         .in-game .bg-overlay { opacity: 1; }
 
-        /* 管家層級設定 */
+        /* 管家立繪層級絕對領先 */
         .actor-slot { position: absolute; z-index: 40000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
         .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
@@ -33,8 +33,8 @@
         .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
         .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
 
-        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 15000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; text-align: center; }
+        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 15000; padding: 20px; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .text-body { font-size: 0.95rem; line-height: 1.7; color: #ffffff; letter-spacing: 1px; width: 100%; text-align: center; position: relative; }
         .text-body.fade-in { animation: pureFade 0.6s forwards; }
         @keyframes pureFade { from { opacity: 0; } to { opacity: 1; } }
         
@@ -47,9 +47,8 @@
         .node { height: 48px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1rem; font-weight: 700; cursor: pointer; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-        .cmd-win { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 88%; max-width: 400px; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 20000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .cmd-win { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 88%; max-width: 400px; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 30000; display: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 20px; font-family: inherit; outline: none; border-radius: 0; }
-
         .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 1.8s cubic-bezier(0.19, 1, 0.22, 1); opacity: 0; z-index: 60; }
     </style>
 </head>
@@ -66,6 +65,7 @@
     <div id="stage-init" class="stage-layer active">
         <div style="position:fixed; bottom:8vh; left:0; width:100%; display:flex; flex-direction:column; align-items:center; z-index:100;">
             <div class="rpg-btn" style="padding:18px 50px; font-size:1.1rem;" onclick="Game.start()">進入遊戲 ENTER</div>
+            <div style="color:#fff; opacity:0.3; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="localStorage.clear(); location.reload();">[ 重置遊戲進度 ]</div>
         </div>
     </div>
     <div id="stage-cine" class="stage-layer">
@@ -91,7 +91,9 @@
 </div>
 
 <script>
-    const ICONS = { CRY: 'https://i.meee.com.tw/o3fEvEx.png', PANIC: 'https://i.meee.com.tw/FvQ6mgv.png', RELIEF: 'https://i.meee.com.tw/aPjfGxB.png', SMILE: 'https://i.meee.com.tw/JeWA9ZK.png', FOCUSED: 'https://i.meee.com.tw/Gk6svyO.png', SERIOUS: 'https://i.meee.com.tw/YVrLgG1.png', RUN: 'https://i.meee.com.tw/Xp5JmBU.png', SOFT: 'https://i.meee.com.tw/oTG4WZX.png', DOUBT: 'https://i.meee.com.tw/Gj8fXmU.png' };
+    // 校正表情 ID：CRY -> SOB
+    const ICONS = { SOB: 'https://i.meee.com.tw/o3fEvEx.png', PANIC: 'https://i.meee.com.tw/FvQ6mgv.png', RELIEF: 'https://i.meee.com.tw/aPjfGxB.png', SMILE: 'https://i.meee.com.tw/JeWA9ZK.png', FOCUSED: 'https://i.meee.com.tw/Gk6svyO.png', SERIOUS: 'https://i.meee.com.tw/YVrLgG1.png', RUN: 'https://i.meee.com.tw/Xp5JmBU.png', SOFT: 'https://i.meee.com.tw/oTG4WZX.png', DOUBT: 'https://i.meee.com.tw/Gj8fXmU.png' };
+    
     const stationData = [
         {id:0,name:'泉',f:'1F',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['你看！泉的流動意象回來了。','泉，是一切的開始。']},
         {id:1,name:'煙',f:'2F',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙的輕柔被記錄在這裡。','煙，是溫泉的呼吸。']},
@@ -105,11 +107,9 @@
         state: { solved: JSON.parse(localStorage.getItem('manuscript_solved') || '[]'), userName: '', lastFloor: -1, isBusy: false, hintCount: 0, completed: localStorage.getItem('manuscript_completed') === 'true' },
         
         async setStage(id, forceSkipLoader = false) {
-            if(!forceSkipLoader) {
-                document.getElementById('shutter').classList.add('active');
-                document.getElementById('loading-ui').classList.add('active');
-                await new Promise(r => setTimeout(r, 600)); 
-            }
+            const shutter = document.getElementById('shutter');
+            const loading = document.getElementById('loading-ui');
+            if(!forceSkipLoader) { shutter.classList.add('active'); loading.classList.add('active'); await new Promise(r => setTimeout(r, 800)); }
             document.getElementById('viewport').className = (id === 'stage-init') ? "" : "in-game";
             document.getElementById('main-bg').src = (id === 'stage-init') ? "https://i.meee.com.tw/HVp4AAn.jpg" : "https://i.meee.com.tw/ApxxBEa.jpg";
             document.querySelectorAll('.actor-img').forEach(img => img.classList.remove('visible'));
@@ -117,28 +117,24 @@
             document.getElementById('gp-header').style.display = "none";
             document.querySelectorAll('.stage-layer').forEach(l => l.classList.remove('active'));
             const target = document.getElementById(id); if(target) target.classList.add('active');
-            if(!forceSkipLoader) {
-                await new Promise(r => setTimeout(r, 200)); 
-                document.getElementById('shutter').classList.remove('active'); document.getElementById('loading-ui').classList.remove('active');
-            }
+            if(!forceSkipLoader) { await new Promise(r => setTimeout(r, 200)); shutter.classList.remove('active'); loading.classList.remove('active'); }
         },
 
         start() { if(this.state.completed) { this.renderRedeemed(); return; } this.updateProg(); document.getElementById('bgm').play().catch(()=>{}); this.initPrologue(); },
 
-        /* 1. 旁白與表情完全對位：開場 */
+        /* 校正開場台詞與 SOB 表情 */
         async initPrologue() {
             await this.setStage('stage-cine');
             this.runAutoSeq('CINE', [
-                {m:'CRY', t:'嗚……我是飯店的管家小晶……'},
-                {m:'CRY', t:'我們準備一周年的設計手稿……不見了……'},
-                {m:'CRY', t:'那些手稿，其實藏著這間飯店誕生的秘密。'},
-                {m:'CRY', t:'如果找不回來，好像就少了一點什麼……'}
+                {m:'SOB', t:'嗚嗚...我是飯店管家小晶...'},
+                {m:'SOB', t:'我們為了慶祝滿一周年，特別展示設計師的珍貴手稿。'},
+                {m:'SOB', t:'結果我不小心把設計師的手稿用不見了...'},
+                {m:'SOB', t:'如果找不回來，周年慶祝活動就沒辦法如期舉行了。'}
             ], () => {
-                this.say('cine-txt', '你願意陪我一起找回來嗎？', 'PANIC');
-                setTimeout(() => {
-                    const txt = document.getElementById('cine-txt');
-                    txt.innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
-                }, 2000);
+                this.runManualSeq('CINE', [{m:'PANIC', t:'你願意陪我一起找回來嗎？'}], () => {
+                    document.getElementById('cine-tip').style.display = "none";
+                    document.getElementById('cine-txt').innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
+                });
             }, 2500);
         },
 
@@ -180,12 +176,10 @@
             this.state.curIdx = idx; this.state.hintCount = 0;
             const curFloor = parseInt(stationData[idx].f);
             document.getElementById('gp-header').style.display = "block";
-            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box" style="width:100%;height:100%;"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
-            
+            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
             let seq = [];
             if(!skipIntro) seq.push({m:'FOCUSED', t:'這層樓，好像有點不一樣……'});
             seq.push({m:'FOCUSED', t:'我們先找到那個寶箱吧。'});
-            
             this.runManualSeq('GP', seq, () => {
                 this.state.lastFloor = curFloor;
                 this.sayGP("找到了！解開線索啟動顯影吧。", 'SMILE');
@@ -197,11 +191,7 @@
             const win = document.getElementById('cmd-win'); const input = document.getElementById('p-input');
             const hintBtn = document.getElementById('hint-btn');
             if(document.getElementById('gp-tip')) document.getElementById('gp-tip').style.display = "none";
-            
-            /* [修復 1] 打開視窗必清空 */
             input.value = ""; win.style.display = "block"; input.focus();
-            input.placeholder = redeemMode ? "工作人員代碼" : "••••";
-
             if(redeemMode) {
                 document.getElementById('cmd-title').innerText = "櫃台核銷"; hintBtn.style.display = "none";
                 document.getElementById('cmd-submit').onclick = () => {
@@ -211,10 +201,7 @@
                 document.getElementById('cmd-title').innerText = "輸入答案"; hintBtn.style.display = "block";
                 document.getElementById('cmd-submit').onclick = () => {
                     if(input.value === stationData[this.state.curIdx].code) { win.style.display = "none"; this.solveSuccess(); } 
-                    else { 
-                        /* [修復 2] 答錯表情對位：DOUBT */
-                        this.setMood('DOUBT'); this.sayGP("好像不太對……再看看周圍？"); 
-                    }
+                    else { this.setMood('DOUBT'); this.sayGP("好像不太對……再看看周圍？"); } // 校正表情為 DOUBT
                 };
                 hintBtn.onclick = () => {
                     this.state.hintCount++;
@@ -244,16 +231,16 @@
                 setTimeout(() => { p.style.opacity = 1; p.style.top = pos[i].t; p.style.left = pos[i].l; }, 300*i); 
             }
             setTimeout(() => {
-                document.getElementById('puzz-box').style.opacity = "0"; document.getElementById('puzz-box').style.transition = "opacity 1.5s";
+                const box = document.getElementById('puzz-box'); box.style.transition = "opacity 1.5s"; box.style.opacity = "0";
                 setTimeout(() => {
-                    document.getElementById('puzz-box').innerHTML = `<div id="final-master" style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; opacity:0; transition:opacity 2.5s; border: 4px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.8);"></div>`;
-                    document.getElementById('puzz-box').style.opacity = "1";
+                    box.innerHTML = `<div id="final-master" style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/CfmlAS8.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; opacity:0; transition:opacity 2.5s; border: 4px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.8);"></div>`;
+                    box.style.opacity = "1";
                     setTimeout(() => {
                         const m = document.getElementById('final-master'); if(m) m.style.opacity = "1";
                         setTimeout(() => {
                             this.runAutoSeq('GP', [
                                 {m:'SMILE', t:'我們找回所有手稿了！'},
-                                {m:'SMILE', t:`${this.state.userName}，謝謝你陪我完成一周年慶祝。`},
+                                {m:'SMILE', t:`${this.state.userName}，謝謝你陪我完成慶祝活動。`},
                                 {m:'SMILE', t:'這是一點小小心意，請收下。'},
                                 {m:'SOFT', t:'……這件事，就當我們的秘密吧。'}
                             ], () => this.renderRedeem());
@@ -265,13 +252,11 @@
 
         async renderRedeem() { 
             await this.setStage('stage-gp'); this.setMood('SOFT');
-            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/oD2jGIm.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center;"></div></div>`;
+            document.getElementById('gp-canvas').innerHTML = `<div class="ratio-box"><div style="width:100%; height:100%; background-image:url('https://i.meee.com.tw/oD2jGIm.jpg'); background-size:contain; background-repeat:no-repeat; background-position:center; filter: none !important; opacity: 1 !important;"></div></div>`;
             document.getElementById('gp-db').style.display = "flex";
             document.getElementById('gp-txt').innerHTML = `<p style="color:#fff;">請將此畫面出示給櫃台人員。</p><div class="rpg-btn" onclick=\"Game.initStaffCheck()\">櫃台核銷</div>`; 
         },
-
         initStaffCheck() { this.openPuzzleModal(true); },
-
         async renderRedeemed() {
             await this.setStage('stage-cine'); this.setMood('SOFT');
             document.getElementById('main-bg').src = "https://i.meee.com.tw/oD2jGIm.jpg"; 
@@ -280,7 +265,7 @@
         },
 
         setMood(mood) {
-            const isCine = document.getElementById('stage-init').classList.contains('active') || document.getElementById('stage-cine').classList.contains('active');
+            const isCine = document.getElementById('stage-cine').classList.contains('active') || document.getElementById('stage-init').classList.contains('active');
             const el = isCine ? document.getElementById('cine-actor') : document.getElementById('gp-actor');
             if(el && mood) { el.src = ICONS[mood]; el.classList.add('visible'); }
         },
@@ -308,7 +293,7 @@
         updateProg() {
             const bar = document.getElementById('prog-bar'); if(!bar) return; bar.innerHTML = "";
             for(let i=0; i<6; i++) { const unit = document.createElement('div'); unit.className = 'prog-unit' + (i < this.state.solved.length ? ' filled' : ''); bar.appendChild(unit); }
-            const pText = document.getElementById('prog-text'); if(pText) pText.innerText = `手稿回收進度 ${this.state.solved.length}/6`;
+            document.getElementById('prog-text').innerText = `手稿回收進度 ${this.state.solved.length}/6`;
             localStorage.setItem('manuscript_solved', JSON.stringify(this.state.solved));
         }
     };
