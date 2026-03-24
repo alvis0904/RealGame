@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V80.0 Fixed</title>
+    <title>找尋失落的手稿 Lost Manuscript | V80.1 Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -21,7 +21,6 @@
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
         .in-game .bg-overlay { opacity: 1; }
 
-        /* [關鍵修復] 管家表情與對話框層級最高，且對話框位置固定 */
         .actor-slot { position: absolute; z-index: 65000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
         .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
         .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
@@ -53,7 +52,20 @@
 
         .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; }
         .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 1.5s; }
+        
+        /* [修正：統一圖片尺寸] */
         .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 1.8s ease-in-out; opacity: 0; z-index: 60; }
+        
+        /* [修正：移除邊框與陰影，統一設為 cover] */
+        .final-img {
+            width: 100%;
+            height: 100%;
+            background-size: cover; /* 強制圖片撲滿，解決比例不符導致的白邊 */
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2.5s;
+        }
     </style>
 </head>
 <body>
@@ -133,10 +145,10 @@
 
         async initPrologue() {
             await this.setStage('stage-cine');
-            const script = [{m:'SOB', t:'（啜泣聲）嗚嗚嗚…'}, {m:'SOB', t:'您好，我是飯店的管家小晶…'}, {m:'SOB', t:'不好意思讓您看笑話了...'}, {m:'SOB', t:'最近飯店正在準備一周年的活動，'}, {m:'SOB', t:'打算展示設計師珍貴的手稿，'}, {m:'SOB', t:'結果...'}, {m:'CRY', t:'結果…我不小心弄丟了...'}, {m:'CRY', t:'（嚎啕大哭）嗚哇哇哇...'}, {m:'SOB', t:'好心的旅人，'}, {m:'SOB', t:'您願意陪我一起找出手稿嗎？'}];
+            const script = [{m:'SOB', t:'（啜泣聲）嗚嗚嗚…'}, {m:'SOB', t:'您好，我是飯店的管家小晶…'}, {m:'SOB', t:'不好意思讓您看笑話了...'}, {m:'SOB', t:'最近飯店正在準備一周年的活動，'}, {m:'SOB', t:'打算展示設計師珍貴的手稿，'}, {m:'SOB', t:'結果...'}, {m:'CRY', t:'結果…我不小心弄丟了...'}, {m:'CRY', t:'（嚎啕大哭）嗚哇哇哇'}, {m:'SOB', t:'好心的旅人，'}, {m:'SOB', t:'您願意陪我一起找回來嗎？'}];
             this.runAutoSeq('CINE', script, () => {
                 document.getElementById('cine-tip').style.display = "none";
-                document.getElementById('cine-txt').innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">我很樂意幫忙！</div>`;
+                document.getElementById('cine-txt').innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
             });
         },
 
@@ -163,7 +175,7 @@
                 const node = document.createElement('div'); node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`; node.innerText = `${s.f} ${s.name}`;
                 node.onclick = () => { 
                     if(this.state.isBusy) return; 
-                    if(this.state.solved.includes(s.id)) this.sayGP("這一層的手稿，我們已經找回來了。", 'HELLO'); 
+                    if(this.state.solved.includes(s.id)) this.sayGP("這一層的手稿，我們已經找回來了。", 'THANKS'); 
                     else this.goChapter(s.id); 
                 };
                 document.getElementById('grid').appendChild(node);
@@ -181,13 +193,12 @@
             document.getElementById('gp-header').style.display = "block";
             document.getElementById('gp-canvas').innerHTML = `<div style="width:100%;height:100%;"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
             
-            // [關鍵修正]：進入樓層瞬間，強制顯示對話框底框
+            // [修正：進入樓層瞬間，強制顯示對話框底框]
             const db = document.getElementById('gp-db');
             db.style.display = "flex";
 
             let floorScript = [];
             if(isSameFloor) {
-                // [修復]：同層樓尋寶，表情為 FIND
                 floorScript = [{m:'FIND', t:'這層樓還有未解開的線索...'}, {m:'FIND', t:'再努力找看看吧！'}];
             } else {
                 if(curFloor === 1) floorScript = [{m:'HELLO', t:'這層樓、是飯店特有的休憩空間，'}, {m:'HELLO', t:'這裡有大眾風呂、也有戶外泳池，'}, {m:'HELLO', t:'能泡湯又能玩水，深受很多客人喜愛，'}, {m:'HELLO', t:'我們快找到寶箱吧！'}];
@@ -196,7 +207,7 @@
                 else if(curFloor === 6) floorScript = [{m:'HELLO', t:`${this.state.userName}、是不是很少到六樓來？`}, {m:'HELLO', t:'在這層樓、客人能好好享受SPA服務，'}, {m:'HELLO', t:'所以…我們要小聲一點，努力找出線索喔！'}];
             }
 
-            // [修復]：介紹樓層改為自動播放（runAutoSeq），不須客人點擊
+            // [修復：樓層介紹改為自動播放，最後才停下彈出輸入框]
             this.runAutoSeq('GP', floorScript, () => {
                 this.state.lastFloor = curFloor;
                 this.sayGP("找到了！解開線索啟動顯影吧。", 'HELLO');
@@ -205,7 +216,7 @@
                     document.getElementById('cmd-win').style.display = "block"; 
                     document.getElementById('p-input').focus(); 
                 }, 1000);
-            }, 3000); 
+            }, 3000); // 每句停留 3 秒
 
             document.getElementById('cmd-submit').onclick = () => {
                 if(document.getElementById('p-input').value === stationData[this.state.curIdx].code) {
@@ -215,7 +226,6 @@
                 }
             };
             
-            // [修復]：提示功能點擊修復
             document.getElementById('hint-btn').onclick = () => {
                 document.getElementById('cmd-win').style.display = "none";
                 this.sayGP("請仔細看看這層樓的特別之處！", 'FIND');
@@ -238,18 +248,12 @@
             setTimeout(() => {
                 canvas.children[0].style.opacity = "0"; canvas.children[0].style.transition = "opacity 1.5s";
                 setTimeout(() => {
-                    canvas.innerHTML = `<div id="final-master" style="width:100%;height:100%;background-image:url('https://i.meee.com.tw/CfmlAS8.jpg');background-size:contain;background-repeat:no-repeat;background-position:center;opacity:0;transition:opacity 2.5s;border:4px solid #fff;"></div>`;
+                    // [修正：使用 final-img 樣式移除白邊與陰影，background-size 設為 cover]
+                    canvas.innerHTML = `<div id="final-master" class="final-img" style="background-image:url('https://i.meee.com.tw/CfmlAS8.jpg');"></div>`;
                     setTimeout(() => {
                         document.getElementById('final-master').style.opacity = "1";
                         setTimeout(() => {
-                            const finalLines = [
-                                {m:'THANKS', t:`${this.state.userName}，謝謝您陪我找到所有的手稿，`},
-                                {m:'THANKS', t:'這樣飯店滿一周年活動能順利進行了！'},
-                                {m:'THANKS', t:'為了表達感謝，'},
-                                {m:'THANKS', t:'我幫您準備了一點小心意，'},
-                                {m:'THANKS', t:'希望您會喜歡！'},
-                                {m:'SECRET', t:'噓…這件事不要告訴總經理喔！'}
-                            ];
+                            const finalLines = [{m:'THANKS', t:`${this.state.userName}，謝謝您陪我找到所有的手稿，`}, {m:'THANKS', t:'這樣飯店滿一周年活動能順利進行了！'}, {m:'THANKS', t:'為了表達感謝，'}, {m:'THANKS', t:'我幫您準備了一點小心意，'}, {m:'THANKS', t:'希望您會喜歡！'}, {m:'SECRET', t:'噓…這件事不要告訴總經理喔！'}];
                             this.runAutoSeq('GP', finalLines, () => this.renderRedeem());
                         }, 2500);
                     }, 100);
@@ -281,6 +285,23 @@
         },
         updateProg() { const bar = document.getElementById('prog-bar'); bar.innerHTML = ""; for(let i=0; i<6; i++) { const u = document.createElement('div'); u.className = 'prog-unit' + (i < this.state.solved.length ? ' filled' : ''); bar.appendChild(u); } document.getElementById('prog-text').innerText = `手稿回收進度 ${this.state.solved.length}/6`; localStorage.setItem('manuscript_solved', JSON.stringify(this.state.solved)); }
     };
+
+    // [新增音頻修復邏輯]
+    document.addEventListener("visibilitychange", function() {
+        const bgm = document.getElementById('bgm');
+        if (!bgm) return;
+
+        if (document.hidden) {
+            // 用戶離開頁面（包括關閉 LINE 視窗），暫停 BGM
+            bgm.pause();
+        } else {
+            // 用戶重新回到頁面
+            if (bgm.paused && Game.state.solved.length < 6) {
+                bgm.play().catch(()=>{}); // 嘗試恢復播放，除非用戶已手動重設或通關
+            }
+        }
+    });
+
 </script>
 </body>
 </html>
