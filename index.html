@@ -3,305 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 Lost Manuscript | V80.1 Stable</title>
+    <title>找尋失落的手稿 | Official Final V133</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Noto Serif TC', serif; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Noto Serif TC', serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
         #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
-        #shutter { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; pointer-events: none; opacity: 0; transition: opacity 0.5s; visibility: hidden; }
-        #shutter.active { visibility: visible; opacity: 1; pointer-events: auto; }
-        #loading-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 90001; text-align: center; display: none; }
-        #loading-ui.active { display: block; }
         
-        .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; z-index: 10; transition: opacity 0.4s; }
-        .stage-layer.active { opacity: 1 !important; visibility: visible !important; }
-        .bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index: 1; }
-        .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 2; opacity: 0; transition: opacity 0.8s; }
-        .in-game .bg-overlay { opacity: 1; }
+        /* 基礎背景 */
+        .bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; z-index: 1; transition: opacity 1s; }
+        .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2; transition: opacity 1s; }
+        
+        #fade-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 110000; pointer-events: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100000; display: none; align-items: center; justify-content: center; flex-direction: column; opacity: 0; transition: opacity 0.8s; }
+        #loading-screen.active { display: flex; opacity: 1; }
 
-        .actor-slot { position: absolute; z-index: 65000; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; }
-        .cine-actor-slot { bottom: 23vh; left: 50%; transform: translateX(-50%); width: 320px; height: 320px; }
-        .gp-actor-slot { bottom: 18vh; left: 5px; width: 180px; height: 180px; }
-        .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; visibility: hidden; transition: opacity 0.3s; }
+        .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; }
+        .stage-layer.active { display: block !important; }
+
+        /* [管家位置精調] 置中時腳部站在線上，距離空一點點 */
+        .cine-mode .actor-slot { bottom: 21vh; left: 50%; transform: translateX(-50%); width: 310px; height: 310px; }
+        .cine-mode .bg-overlay { opacity: 1; }
+        
+        /* 結局全流程維持靠左模式 */
+        .gp-mode .actor-slot { bottom: 21.5vh; left: 10px; width: 180px; height: 180px; }
+        .gp-mode .bg-overlay { opacity: 0.6; }
+
+        .actor-slot { position: absolute; z-index: 90000; pointer-events: none; transition: all 0.6s ease-in-out; }
+        .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.4s; }
         .actor-img.visible { opacity: 1 !important; visibility: visible !important; }
 
-        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; height: 21vh; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 60000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); cursor: pointer; }
-        .text-body { font-size: 0.95rem; line-height: 1.8; color: #ffffff; width: 100%; text-align: center; }
-        .text-body.fade-in { animation: pureFade 0.6s forwards; }
-        @keyframes pureFade { from { opacity: 0; } to { opacity: 1; } }
-        
-        .next-tip { position: absolute; bottom: 10px; right: 15px; color: var(--accent); font-size: 0.7rem; font-weight: 700; display: none; animation: tipBlink 1.5s infinite; pointer-events: none; z-index: 61000; }
-        @keyframes tipBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        /* 對話框 */
+        .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; min-height: 140px; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 85000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .text-body { font-size: 0.95rem; line-height: 1.8; color: #ffffff; width: 100%; }
 
-        .rpg-btn { display: inline-block; padding: 12px 35px; border: 2px solid var(--accent); background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; text-align: center; }
-        
-        .gp-header { position: absolute; top: 0; left: 0; width: 100%; padding: 30px 20px; z-index: 9500; display: none; }
-        .prog-bar-main { display: flex; gap: 6px; width: 100%; height: 6px; margin-top: 5px; }
-        .prog-unit { flex: 1; background: rgba(255,255,255,0.2); border-radius: 2px; }
-        .prog-unit.filled { background: var(--accent) !important; box-shadow: 0 0 10px var(--accent); }
+        /* 手稿容器：1:1，寬度滿版 */
+        .img-container { width: 100vw; aspect-ratio: 1/1; position: absolute; top: 8vh; left:0; z-index: 5; display: none; background: transparent; transition: opacity 1.5s; }
+        .main-img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) blur(10px); opacity: 0; transition: opacity 3s; }
+        .main-img.revealed { filter: none !important; opacity: 1 !important; }
 
-        .map-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 85%; margin: 0 auto; }
-        .node { height: 48px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-weight: 700; cursor: pointer; }
+        /* 樓層按鈕 */
+        .map-grid { position: absolute; top: 12vh; left: 7.5%; width: 85%; z-index: 50000; display: flex; flex-direction: column; gap: 10px; }
+        .node { height: 48px; background: rgba(255,255,255,0.95); border: 1px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .node .slash { font-size: 0.6em; margin: 0 8px; color: #bbb; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); }
-        
-        .cmd-win { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 88%; max-width: 400px; background: #fff; border: 3px solid var(--primary); padding: 25px; z-index: 70000; display: none; border-radius: 12px; text-align: center; }
-        .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 20px; outline: none; border-radius: 0; }
-        .cmd-win .rpg-btn { width: 100%; display: block; box-sizing: border-box; }
 
-        .main-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: grayscale(1) blur(10px); opacity: 0; }
-        .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 1.5s; }
+        /* 按鈕：橢圓、實心、陰影 */
+        .rpg-btn { display: inline-block; padding: 12px 45px; border: none; background: var(--accent); color: #fff; font-weight: 700; border-radius: 50px; cursor: pointer; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
+        .rpg-btn:active { transform: translateY(2px); }
         
-        /* [修正：統一圖片尺寸] */
-        .puzzle-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 1.8s ease-in-out; opacity: 0; z-index: 60; }
-        
-        /* [修正：移除邊框與陰影，統一設為 cover] */
-        .final-img {
-            width: 100%;
-            height: 100%;
-            background-size: cover; /* 強制圖片撲滿，解決比例不符導致的白邊 */
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 2.5s;
-        }
+        /* 拼圖動畫區：1:1 */
+        .puzz-box { position: fixed; top: 8vh; left:0; width:100vw; aspect-ratio: 1/1; z-index: 70000; pointer-events: none; opacity: 0; transition: opacity 1.5s; }
+        .puzz-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 3.5s cubic-bezier(0.25, 0.1, 0.25, 1); opacity: 0; }
+
+        .cmd-win { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 88%; background:#fff; border: 3px solid var(--primary); padding: 25px; z-index: 99000; display: none; border-radius: 12px; text-align: center; }
+        .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 20px; outline:none; }
     </style>
 </head>
 <body>
-<div id="shutter"></div>
-<div id="loading-ui"><img src="https://i.meee.com.tw/BuhjH4I.png" style="width:100px;"><div style="color:var(--accent); letter-spacing:2px; font-size:0.8rem; margin-top:10px;">〔 記憶載入中... 〕</div></div>
 
+<div id="fade-mask"></div>
+<div id="loading-screen"><img src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/run.png" style="width:100px;"><div style="color:var(--accent); letter-spacing:2px; font-size:0.8rem; margin-top:10px;">〔 記憶載入中... 〕</div></div>
 <audio id="bgm" loop><source src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/bgm.mp3" type="audio/mpeg"></audio>
-<audio id="se-reveal"><source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg"></audio>
 
 <div id="viewport">
-    <img id="main-bg" src="https://i.meee.com.tw/HVp4AAn.jpg" class="bg-layer">
-    <div class="bg-overlay" id="main-overlay"></div>
+    <img id="main-bg" src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_01.jpg" class="bg-layer">
+    <div id="overlay" class="bg-overlay"></div>
+    
     <div id="stage-init" class="stage-layer active">
-        <div style="position:fixed; bottom:8vh; left:0; width:100%; display:flex; flex-direction:column; align-items:center; z-index:100;">
-            <div class="rpg-btn" style="padding:18px 50px; font-size:1.1rem;" onclick="Game.start()">進入遊戲 ENTER</div>
-            <div style="color:#fff; opacity:0.3; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="localStorage.clear(); location.reload();">[ 重置遊戲進度 ]</div>
+        <div style="position:fixed; bottom:12vh; left:0; width:100%; display:flex; flex-direction:column; align-items:center; z-index:9999;">
+            <div class="rpg-btn" onclick="Game.boot()">進入遊戲 ENTER</div>
+            <div style="color:#fff; opacity:0.3; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="Game.reset()">[ 重置遊戲進度 ]</div>
         </div>
     </div>
-    <div id="stage-cine" class="stage-layer">
-        <div class="actor-slot cine-actor-slot"><img id="cine-actor" class="actor-img"></div>
-        <div class="gp-footer" id="cine-db"><div id="cine-txt" class="text-body"></div><div class="next-tip" id="cine-tip">下一步 ▼</div></div>
-    </div>
-    <div id="stage-gp" class="stage-layer">
-        <div class="gp-header" id="gp-header">
+    
+    <div id="stage-main" class="stage-layer">
+        <div id="gp-header" style="position:absolute; top:35px; width:100%; padding:0 20px; z-index:95000; display:none;">
             <div id="prog-text" style="font-size:0.65rem; color:var(--accent); font-weight:700;">手稿回收進度 0/6</div>
-            <div id="prog-bar" class="prog-bar-main"></div>
+            <div id="prog-bar" style="display:flex; gap:6px; height:6px; margin-top:5px; background:rgba(255,255,255,0.1);"></div>
         </div>
-        <div id="gp-canvas" style="width:100%; height:72vh; display:flex; align-items:center; justify-content:center; padding-top:50px;"></div>
-        <div class="actor-slot gp-actor-slot"><img id="gp-actor" class="actor-img"></div>
-        <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div><div class="next-tip" id="gp-tip">下一步 ▼</div></div>
+        <div id="map-area"></div>
+        <div id="gp-canvas" class="img-container"></div>
+        <div id="puzz-box" class="puzz-box"></div>
+        <div class="actor-slot"><img id="gp-actor" class="actor-img"></div>
+        <div class="gp-footer" id="gp-db"><div id="gp-txt" class="text-body"></div></div>
     </div>
 </div>
 
 <div id="cmd-win" class="cmd-win">
-    <h3 id="cmd-title" style="margin-top:0; color:var(--primary); font-size:1.1rem;">輸入答案</h3>
+    <h3 id="cmd-title" style="margin-top:0; color:var(--primary);">輸入密碼</h3>
     <input type="tel" id="p-input" class="cmd-input" maxlength="4" placeholder="••••" inputmode="numeric">
-    <div class="rpg-btn" style="background:var(--primary); color:#fff; border:none;" id="cmd-submit">驗證密碼</div>
-    <div class="rpg-btn" style="border-style:dashed; font-size:0.85rem;" id="hint-btn">【需要提示嗎？】</div>
+    <div class="rpg-btn" onclick="Game.handleConfirm()">確認驗證</div>
+    <div id="hint-btn" style="color:var(--accent); font-size:0.8rem; margin-top:15px; text-decoration:underline; cursor:pointer;" onclick="Game.showHint()">【需要提示嗎？】</div>
 </div>
 
 <script>
-    const ICONS = { 
-        SOB: 'https://i.meee.com.tw/PF2vL48.png', CRY: 'https://i.meee.com.tw/TLurp4f.png',
-        THANKS: 'https://i.meee.com.tw/zMIVu6x.png', HELLO: 'https://i.meee.com.tw/CVowXAw.png',
-        FIND: 'https://i.meee.com.tw/4XGSBDB.png', DOUBT: 'https://i.meee.com.tw/K2m363D.png',
-        SECRET: 'https://i.meee.com.tw/VpiNBCV.png', RUN: 'https://i.meee.com.tw/BuhjH4I.png',
-        READ: 'https://i.meee.com.tw/YVrLgG1.png'
-    };
+    const ICONS = { HELLO: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/hello.png', SOB: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/sob.png', CRY: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/cry.png', THANKS: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/thanks.png', SECRET: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/secret.png', DOUBT: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/doubt.png', FIND: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/find.png', READ: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/read.png' };
 
     const stationData = [
-        {id:0,name:'泉',f:'1F',code:'101',img:'https://i.meee.com.tw/GvFaGGo.jpg',story:['你看！泉的流動意象回來了。','泉，是一切的開始。']},
-        {id:1,name:'煙',f:'2F',code:'201',img:'https://i.meee.com.tw/XOfo4Y0.jpg',story:['煙的輕柔被記錄在這裡。','煙，是溫泉的呼吸。']},
-        {id:2,name:'浸',f:'2F',code:'202',img:'https://i.meee.com.tw/ne2rLD7.jpg',story:['陶片拼貼的印記重新浮現。','浸，是身心的沉浸。']},
-        {id:3,name:'織',f:'5F',code:'501',img:'https://i.meee.com.tw/H5wykbs.jpg',story:['線條交織出飯店的歷史。','織，讓記憶得以延續。']},
-        {id:4,name:'紋',f:'5F',code:'502',img:'https://i.meee.com.tw/0UzAbFP.jpg',story:['觸摸得到的設計紋路。','紋，是光影的印記。']},
-        {id:5,name:'岩',f:'6F',code:'601',img:'https://i.meee.com.tw/CJQqf7W.jpg',story:['安山岩，飯店最沉穩的基底。','岩，讓一切存在。']}
+        {id:0, name:'泉', f:'1F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/spring-01.jpg', intro: [{t:"(UserName)，你知道嗎？",m:"READ"},{t:"北投是台灣著名的溫泉區，",m:"READ"},{t:"擁有青磺、白磺與鐵磺三種泉質，",m:"READ"},{t:"在這裡，有一處開放給所有人的空間...",m:"READ"},{t:"旅人、居民、甚至路過的遊客，",m:"READ"},{t:"都能在這裡稍作歇息...",m:"READ"},{t:"我記得，這裡好像有手稿的線索…",m:"READ"}], solve: [{t:"飯店的泉質是少見的白磺溫泉，",m:"HELLO"},{t:"乳白色澤帶有淡淡硫磺氣味。",m:"HELLO"},{t:"我們希望透過這座足湯，",m:"HELLO"},{t:"串起與旅人、鄰里更深的連結！",m:"HELLO"}]},
+        {id:1, name:'紋', f:'1F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/pattern-01.jpg', intro: [{t:"時間會留下痕跡，",m:"READ"},{t:"自然會形成紋理，",m:"READ"},{t:"我感覺到手稿就在這附近…",m:"READ"}], solve: [{t:"設計師將自然元素，",m:"HELLO"},{t:"轉化為空間中的紋理，",m:"HELLO"},{t:"來泡湯的時候，",m:"HELLO"},{t:"也別忘了欣賞這些設計巧思喔！",m:"HELLO"}]},
+        {id:2, name:'煙', f:'2F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/smoke-01.jpg', intro: [{t:"(UserName)，在新北投的街道上，",m:"READ"},{t:"有時會看到地面冒出煙霧。",m:"READ"},{t:"那不只是溫泉的現象，",m:"READ"},{t:"也變成了藝術創作的靈感喔！",m:"READ"},{t:"大廳裡有一幅作品，似乎藏著線索…",m:"READ"}], solve: [{t:"這幅作品名叫雲霧繚繞的那個清晨，",m:"HELLO"},{t:"描繪北投的煙霧與記憶，",m:"HELLO"},{t:"不過…",m:"SECRET"},{t:"說不定真的有女巫存在呢？",m:"SECRET"}]},
+        {id:3, name:'織', f:'2F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/weave-01.jpg', intro: [{t:"一橫一豎，一粗一細，",m:"READ"},{t:"交織成一段故事...",m:"READ"},{t:"北投晶泉丰旅的一周年，",m:"READ"},{t:"也是與旅人一同織出的回憶，",m:"READ"},{t:"(UserName)，還記得辦理入住的地方嗎？",m:"READ"}], solve: [{t:"Gallery泉咏、是旅程的起點，",m:"HELLO"},{t:"也是回憶開始的地方，",m:"HELLO"},{t:"在這個空間裡，",m:"HELLO"},{t:"設計師使用交錯的手法營造氛圍，",m:"HELLO"},{t:"不同時間來，",m:"HELLO"},{t:"都會有不一樣的感受喔！",m:"HELLO"}]},
+        {id:4, name:'浸', f:'5F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/soak-01.jpg', intro: [{t:"來到北投，怎麼能不泡溫泉呢？",m:"READ"},{t:"飯店除了有獨立湯屋外，",m:"READ"},{t:"還能預約SPA體驗，讓身心好好放鬆，",m:"READ"},{t:"我想，這裡應該也會有線索…",m:"READ"}], solve: [{t:"在這裡，有許多類型的湯屋，",m:"每一間都能享受白磺溫泉，",m:"HELLO"},{t:"期待藉由沉浸湯泉、徹底療癒身心，",m:"HELLO"},{t:"這也是設計師規劃空間的初衷。",m:"HELLO"}]},
+        {id:5, name:'岩', f:'6F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/rock-01.jpg', intro: [{t:"(UserName)、是不是很少到六樓來？",m:"HELLO"},{t:"這裡的石材與光影，",m:"HELLO"},{t:"像是來自大地深處，",m:"HELLO"},{t:"要小聲一點喔…",m:"SECRET"},{t:"別吵醒沉睡的熔岩了…",m:"SECRET"}], solve: [{t:"岩、象徵著安定與寧靜，",m:"HELLO"},{t:"設計師希望、在溫泉與芳療之間，",m:"HELLO"},{t:"旅人的身心能慢慢沉靜下來。",m:"HELLO"}]}
     ];
 
     const Game = {
-        state: { solved: JSON.parse(localStorage.getItem('manuscript_solved') || '[]'), userName: '', lastFloor: -1, isBusy: false, autoTimer: null },
+        state: { solved: JSON.parse(localStorage.getItem('solved_ids') || '[]'), userName: localStorage.getItem('user_name') || '', isBusy: false, autoTimer: null, curIdx: -1, isRedeemed: localStorage.getItem('is_redeemed')==='true' },
 
-        async setStage(id, forceSkip = false) {
-            clearTimeout(this.state.autoTimer);
-            const shutter = document.getElementById('shutter'); const loading = document.getElementById('loading-ui');
-            if(!forceSkip) { shutter.classList.add('active'); loading.classList.add('active'); await new Promise(r => setTimeout(r, 800)); }
-            document.getElementById('viewport').className = (id === 'stage-init') ? "" : "in-game";
-            document.getElementById('main-bg').src = (id === 'stage-init') ? "https://i.meee.com.tw/HVp4AAn.jpg" : "https://i.meee.com.tw/ApxxBEa.jpg";
-            document.querySelectorAll('.actor-img').forEach(img => img.classList.remove('visible'));
-            document.querySelectorAll('.gp-footer').forEach(f => { f.style.display = "none"; f.onclick = null; });
-            document.getElementById('gp-header').style.display = "none";
-            document.querySelectorAll('.stage-layer').forEach(l => l.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(!forceSkip) { await new Promise(r => setTimeout(r, 200)); shutter.classList.remove('active'); loading.classList.remove('active'); }
+        boot() {
+            document.getElementById('bgm').play().catch(()=>{});
+            this.startTransition();
         },
 
-        start() { this.updateProg(); document.getElementById('bgm').play().catch(()=>{}); this.initPrologue(); },
+        reset() { localStorage.clear(); location.reload(); },
+
+        async startTransition() {
+            const m = document.getElementById('fade-mask'); m.style.opacity = '1';
+            await new Promise(r => setTimeout(r, 1500));
+            this.initMainUI();
+            this.initPrologue();
+            m.style.opacity = '0';
+        },
+
+        async showLoading() {
+            const ls = document.getElementById('loading-screen');
+            ls.style.display = "flex"; ls.style.opacity = "1";
+            await new Promise(r => setTimeout(r, 1500));
+            ls.style.opacity = "0"; 
+            setTimeout(() => ls.style.display = "none", 800);
+        },
+
+        initMainUI() {
+            document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_01.jpg";
+            document.getElementById('stage-init').classList.remove('active');
+            document.getElementById('stage-main').classList.add('active');
+        },
 
         async initPrologue() {
-            await this.setStage('stage-cine');
-            const script = [{m:'SOB', t:'（啜泣聲）嗚嗚嗚…'}, {m:'SOB', t:'您好，我是飯店的管家小晶…'}, {m:'SOB', t:'不好意思讓您看笑話了...'}, {m:'SOB', t:'最近飯店正在準備一周年的活動，'}, {m:'SOB', t:'打算展示設計師珍貴的手稿，'}, {m:'SOB', t:'結果...'}, {m:'CRY', t:'結果…我不小心弄丟了...'}, {m:'CRY', t:'（嚎啕大哭）嗚哇哇哇'}, {m:'SOB', t:'好心的旅人，'}, {m:'SOB', t:'您願意陪我一起找回來嗎？'}];
-            this.runAutoSeq('CINE', script, () => {
-                document.getElementById('cine-tip').style.display = "none";
-                document.getElementById('cine-txt').innerHTML = `<div class="rpg-btn" onclick="Game.acceptMission()">好啊！我願意幫幫你！</div>`;
+            document.body.className = "cine-mode";
+            document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_02.jpg";
+            const intro = [{t:"親愛的旅人，",m:"HELLO"},{t:"歡迎來到北投晶泉丰旅，",m:"HELLO"},{t:"我是飯店管家--小晶，",m:"HELLO"},{t:"很開心與你一起慶祝飯店的一周年。",m:"HELLO"},{t:"你知道嗎？",m:"SECRET"},{t:"這棟建築裡，藏著許多設計師留下的秘密…",m:"SECRET"},{t:"但是…",m:"SOB"},{t:"我在整理資料時，",m:"SOB"},{t:"不小心把珍貴的手稿弄丟了…",m:"SOB"},{t:"(啜泣)嗚哇哇哇…",m:"CRY",d:5000},{t:"好心的旅人，",m:"SOB"},{t:"你願意陪我一起找回來嗎？",m:"SOB"}];
+            this.runAutoSeqManual(intro, () => {
+                const btnText = this.state.userName ? "Game.showLoading().then(()=>Game.renderMap())" : "Game.askName()";
+                document.getElementById('gp-txt').innerHTML = `<div class="rpg-btn" onclick="${btnText}">我很樂意幫忙</div>`;
             });
         },
 
-        async acceptMission() { 
-            clearTimeout(this.state.autoTimer); this.state.isBusy = false;
-            this.runManualSeq('CINE', [{m:'THANKS', t:'太感謝您了！'}, {m:'HELLO', t:'我要怎麼稱呼您呢？'}], () => this.stepInputName()); 
+        askName() {
+            this.runAutoSeqManual([{t:"太感謝您了！",m:"THANKS"},{t:"我要稱呼您為？",m:"THANKS"}], () => {
+                document.getElementById('gp-txt').innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="請在此輸入姓名" style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:180px;font-size:1.1rem;padding:5px;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()" style="margin-top:15px;">確認</button></div>`;
+            });
         },
 
-        async stepInputName() { 
-            const txt = document.getElementById('cine-txt'); document.getElementById('cine-tip').style.display = "none";
-            txt.innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="您的稱呼" style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:160px;font-size:1.2rem;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()">出發找手稿</button></div>`;
-            setTimeout(() => document.getElementById('p-name').focus(), 300);
+        async submitName() {
+            const val = document.getElementById('p-name').value.trim();
+            if(!val) { alert("請輸入您的姓名才能開始冒險喔！"); return; }
+            this.state.userName = val; localStorage.setItem('user_name', val);
+            await this.showLoading();
+            this.renderMap();
         },
-
-        submitName() { const n = document.getElementById('p-name').value.trim(); if(!n) return; this.state.userName = n; this.renderMap(); },
 
         async renderMap() {
-            await this.setStage('stage-gp'); this.updateProg(); 
+            document.body.className = "gp-mode";
+            document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_02.jpg";
+            document.getElementById('gp-canvas').style.display = "none";
+            document.getElementById('gp-db').style.display = "flex";
             document.getElementById('gp-header').style.display = "block";
-            const db = document.getElementById('gp-db');
-            db.style.display = "flex"; // 強制對話框顯示
-            const canvas = document.getElementById('gp-canvas'); canvas.innerHTML = `<div class="map-grid" id="grid"></div>`;
-            stationData.slice().reverse().forEach(s => {
-                const node = document.createElement('div'); node.className = `node ${this.state.solved.includes(s.id)?'solved':''}`; node.innerText = `${s.f} ${s.name}`;
-                node.onclick = () => { 
-                    if(this.state.isBusy) return; 
-                    if(this.state.solved.includes(s.id)) this.sayGP("這一層的手稿，我們已經找回來了。", 'THANKS'); 
-                    else this.goChapter(s.id); 
-                };
-                document.getElementById('grid').appendChild(node);
-            });
+            this.updateProg();
+
+            if(this.state.isRedeemed) { this.renderRedeemed(); return; }
             if(this.state.solved.length === 6) { 
-                this.runAutoSeq('GP', [{m:'THANKS', t:'終於收集完所有手稿了！'}], () => setTimeout(() => this.finalAssembly(), 1000)); 
-            } else { this.sayGP("你想先去哪一層看看呢？", 'HELLO'); }
-        },
-
-        async goChapter(idx) {
-            const curFloor = parseInt(stationData[idx].f);
-            const isSameFloor = (this.state.lastFloor === curFloor);
-            await this.setStage('stage-gp', false); 
-            this.state.curIdx = idx;
-            document.getElementById('gp-header').style.display = "block";
-            document.getElementById('gp-canvas').innerHTML = `<div style="width:100%;height:100%;"><div id="sk-img" class="main-img" style="background-image:url('${stationData[idx].img}')"></div></div>`;
-            
-            // [修正：進入樓層瞬間，強制顯示對話框底框]
-            const db = document.getElementById('gp-db');
-            db.style.display = "flex";
-
-            let floorScript = [];
-            if(isSameFloor) {
-                floorScript = [{m:'FIND', t:'這層樓還有未解開的線索...'}, {m:'FIND', t:'再努力找看看吧！'}];
-            } else {
-                if(curFloor === 1) floorScript = [{m:'HELLO', t:'這層樓、是飯店特有的休憩空間，'}, {m:'HELLO', t:'這裡有大眾風呂、也有戶外泳池，'}, {m:'HELLO', t:'能泡湯又能玩水，深受很多客人喜愛，'}, {m:'HELLO', t:'我們快找到寶箱吧！'}];
-                else if(curFloor === 2) floorScript = [{m:'HELLO', t:`${this.state.userName}、您知道嗎？`}, {m:'HELLO', t:'這層樓其實是飯店的大廳，'}, {m:'HELLO', t:'我們每天都會在這裡迎接客人蒞臨，'}, {m:'HELLO', t:'所以…我想櫃台應該會有線索...'}];
-                else if(curFloor === 5) floorScript = [{m:'HELLO', t:`${this.state.userName}、這裡是飯店的湯屋接待區，`}, {m:'HELLO', t:'我們除了提供獨立湯屋服務外，'}, {m:'HELLO', t:'還能預約SPA體驗，讓身心好好放鬆，'}, {m:'HELLO', t:'我想...這裡應該也會有線索...'}];
-                else if(curFloor === 6) floorScript = [{m:'HELLO', t:`${this.state.userName}、是不是很少到六樓來？`}, {m:'HELLO', t:'在這層樓、客人能好好享受SPA服務，'}, {m:'HELLO', t:'所以…我們要小聲一點，努力找出線索喔！'}];
+                document.getElementById('map-area').innerHTML = ""; 
+                this.finalSequence(); return; 
             }
 
-            // [修復：樓層介紹改為自動播放，最後才停下彈出輸入框]
-            this.runAutoSeq('GP', floorScript, () => {
-                this.state.lastFloor = curFloor;
-                this.sayGP("找到了！解開線索啟動顯影吧。", 'HELLO');
-                setTimeout(() => { 
-                    document.getElementById('p-input').value = ""; 
-                    document.getElementById('cmd-win').style.display = "block"; 
-                    document.getElementById('p-input').focus(); 
-                }, 1000);
-            }, 3000); // 每句停留 3 秒
+            const mapArea = document.getElementById('map-area');
+            let html = `<div class="map-grid">`;
+            const sorted = [...stationData].sort((a,b) => parseInt(a.f) - parseInt(b.f)).reverse();
+            sorted.forEach(s => {
+                html += `<div class="node ${this.state.solved.includes(s.id)?'solved':''}" onclick="Game.showLoading().then(()=>Game.handleSelect(${s.id}))">${s.f}<span class="slash">/</span>${s.name}</div>`;
+            });
+            mapArea.innerHTML = html + `</div>`;
+            this.runAutoSeqManual([{t:"這六份手稿，似乎散落在館內各處…",m:"HELLO"},{t:"你想從哪一個地方開始呢？",m:"HELLO"}]);
+        },
 
-            document.getElementById('cmd-submit').onclick = () => {
-                if(document.getElementById('p-input').value === stationData[this.state.curIdx].code) {
-                    document.getElementById('cmd-win').style.display = "none"; this.solveSuccess();
-                } else {
-                    this.setMood('DOUBT'); this.sayGP("好像不太對…再努力想一想？");
-                }
-            };
-            
-            document.getElementById('hint-btn').onclick = () => {
-                document.getElementById('cmd-win').style.display = "none";
-                this.sayGP("請仔細看看這層樓的特別之處！", 'FIND');
-                setTimeout(() => { document.getElementById('cmd-win').style.display = "block"; }, 3000);
-            };
+        async handleSelect(idx) {
+            if (this.state.isBusy) return;
+            const data = stationData.find(s => s.id === idx);
+            this.state.curIdx = idx;
+            document.getElementById('map-area').innerHTML = ""; 
+            const canvas = document.getElementById('gp-canvas');
+            canvas.style.display = "block"; canvas.style.opacity = "1";
+            canvas.innerHTML = `<img id="sk-img" class="main-img" src="${data.img}">`;
+            let script = data.intro.map(line => ({ t: line.t.replace(/\(UserName\)/g, this.state.userName), m: line.m }));
+            this.runAutoSeqManual(script, () => {
+                this.runAutoSeqManual([{t:"我記得，這裡好像有手稿的線索…",m:"HELLO"}], () => {
+                    setTimeout(() => { document.getElementById('p-input').value = ""; document.getElementById('cmd-win').style.display = "block"; }, 500);
+                });
+            });
+        },
+
+        handleConfirm() {
+            const input = document.getElementById('p-input').value;
+            if(this.state.curIdx === -1) { 
+                if(input === '0415') { this.state.isRedeemed = true; localStorage.setItem('is_redeemed', 'true'); document.getElementById('cmd-win').style.display = 'none'; Game.showLoading().then(()=>this.renderRedeemed()); } else alert('密碼錯誤');
+            } else {
+                const cur = stationData.find(s=>s.id===this.state.curIdx);
+                if (input === cur.code) { document.getElementById('cmd-win').style.display = "none"; this.solveSuccess(); }
+                else { this.runAutoSeqManual([{t:"嗯……好像不是這個答案，",m:"DOUBT"},{t:"我們再試試看！",m:"DOUBT"}]); }
+            }
         },
 
         async solveSuccess() {
-            const data = stationData[this.state.curIdx]; if(!this.state.solved.includes(data.id)) this.state.solved.push(data.id);
-            this.updateProg(); document.getElementById('se-reveal').play(); document.getElementById('sk-img').classList.add('revealed');
-            this.runAutoSeq('GP', [{m:'HELLO', t:'太好了！找到手稿了！'}], () => { 
-                this.runAutoSeq('GP', data.story.map(l => ({m:'READ', t:l})), () => this.renderMap(), 3500); 
-            }, 2500);
+            if(!this.state.solved.includes(this.state.curIdx)) { this.state.solved.push(this.state.curIdx); localStorage.setItem('solved_ids', JSON.stringify(this.state.solved)); }
+            document.getElementById('sk-img').classList.add('revealed');
+            this.runAutoSeqManual([{t:"(灑花)找到了珍貴的手稿了！",m:"THANKS"}], () => {
+                setTimeout(() => { this.runAutoSeqManual(stationData.find(s=>s.id===this.state.curIdx).solve, async () => { await this.showLoading(); this.renderMap(); }); }, 3000);
+            });
         },
 
-        async finalAssembly() {
-            const canvas = document.getElementById('gp-canvas'); canvas.innerHTML = `<div id="puzz-box" style="position:relative;width:100%;height:100%;"></div>`;
+        async finalSequence() {
+            this.runAutoSeqManual([{t: "太好了，終於收集完所有手稿了！", m: "THANKS"}], () => { this.startAssemblyAnimation(); });
+        },
+
+        async startAssemblyAnimation() {
+            const box = document.getElementById('puzz-box'); 
+            box.style.opacity = "1";
             const pos = [{t:'0%',l:'0%'},{t:'0%',l:'33.3%'},{t:'0%',l:'66.6%'},{t:'50%',l:'0%'},{t:'50%',l:'33.3%'},{t:'50%',l:'66.6%'}];
-            for(let i=0; i<6; i++){ const p = document.createElement('div'); p.className = 'puzzle-piece'; p.style.backgroundImage = `url('${stationData[i].img}')`; p.style.top = (Math.random()*150-25)+'%'; p.style.left = (Math.random()*150-25)+'%'; canvas.children[0].appendChild(p); setTimeout(() => { p.style.opacity = 1; p.style.top = pos[i].t; p.style.left = pos[i].l; }, 300*i); }
+            stationData.forEach((s, i) => {
+                const p = document.createElement('div'); p.className = 'puzz-piece'; p.style.backgroundImage = `url('${s.img}')`;
+                p.style.top = (Math.random()*100)+'%'; p.style.left = (Math.random()*100)+'%';
+                box.appendChild(p); setTimeout(() => { p.style.opacity = 1; p.style.top = pos[i].t; p.style.left = pos[i].l; }, 100);
+            });
+
+            // 停留 2.5s -> 拼圖淡出 1.5s -> 大圖淡入 1.5s
             setTimeout(() => {
-                canvas.children[0].style.opacity = "0"; canvas.children[0].style.transition = "opacity 1.5s";
+                box.style.transition = "opacity 1.5s"; box.style.opacity = "0"; 
                 setTimeout(() => {
-                    // [修正：使用 final-img 樣式移除白邊與陰影，background-size 設為 cover]
-                    canvas.innerHTML = `<div id="final-master" class="final-img" style="background-image:url('https://i.meee.com.tw/CfmlAS8.jpg');"></div>`;
+                    const canvas = document.getElementById('gp-canvas'); 
+                    canvas.style.display = "block"; canvas.style.opacity = "0";
+                    canvas.innerHTML = `<img src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/FA-01.jpg" style="width:100%;height:100%;object-fit:cover;" class="revealed">`;
                     setTimeout(() => {
-                        document.getElementById('final-master').style.opacity = "1";
-                        setTimeout(() => {
-                            const finalLines = [{m:'THANKS', t:`${this.state.userName}，謝謝您陪我找到所有的手稿，`}, {m:'THANKS', t:'這樣飯店滿一周年活動能順利進行了！'}, {m:'THANKS', t:'為了表達感謝，'}, {m:'THANKS', t:'我幫您準備了一點小心意，'}, {m:'THANKS', t:'希望您會喜歡！'}, {m:'SECRET', t:'噓…這件事不要告訴總經理喔！'}];
-                            this.runAutoSeq('GP', finalLines, () => this.renderRedeem());
-                        }, 2500);
+                        canvas.style.transition = "opacity 1.5s"; canvas.style.opacity = "1";
+                        this.finalSpeeches();
                     }, 100);
                 }, 1500);
-            }, 4000);
+            }, 6000); 
         },
 
-        async renderRedeem() { 
-            await this.setStage('stage-gp'); this.setMood('SECRET'); 
-            document.getElementById('gp-canvas').innerHTML = `<div style="width:100%;height:100%;background-image:url('https://i.meee.com.tw/oD2jGIm.jpg');background-size:contain;background-repeat:no-repeat;background-position:center; opacity: 1 !important;"></div>`;
+        async finalSpeeches() {
+            const script = [{t: "這就是最後一張手稿，", m: "HELLO"}, {t: "也是飯店的大廳，", m: "HELLO"}, {t: "在這個空間裡，", m: "HELLO"}, {t: "體現了 煙、泉、浸、織、紋、岩六大精神，", m: "HELLO"}, {t: `${this.state.userName}，謝謝你，`, m: "THANKS"}, {t: "陪我完成這趟旅程…", m: "THANKS"}, {t: "這樣飯店周年活動能順利進行了！", m: "THANKS"}, {t: "為了表達感謝，", m: "THANKS"}, {t: "我準備了一點小心意，", m: "THANKS"}, {t: "希望你會喜歡！", m: "THANKS"}, {t: "噓…這件事不要告訴總經理喔！", m: "SECRET"}];
+            this.runAutoSeqManual(script, () => { this.state.curIdx = -1; this.renderRedeemUI(); });
+        },
+
+        async renderRedeemUI() {
+            await this.showLoading();
+            document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_03.jpg";
+            document.getElementById('gp-canvas').innerHTML = "";
             document.getElementById('gp-db').style.display = "flex";
-            document.getElementById('gp-txt').innerHTML = `<p style="color:#fff;">請將此畫面出示給櫃台人員</p><div class="rpg-btn" onclick=\"Game.initStaffCheck()\">櫃台核銷</div>`; 
+            document.getElementById('gp-txt').innerHTML = `<p style='color:#fff;'>請將此畫面出示給櫃台人員</p><div class='rpg-btn' onclick="document.getElementById('cmd-win').style.display='block';">兌換領取</div>`;
         },
-        initStaffCheck() { document.getElementById('cmd-title').innerText='櫃台核銷'; document.getElementById('hint-btn').style.display='none'; document.getElementById('p-input').value=''; document.getElementById('cmd-win').style.display='block'; document.getElementById('cmd-submit').onclick=()=>{if(document.getElementById('p-input').value==='0415'){document.getElementById('cmd-win').style.display='none';Game.renderRedeemed();}else alert('密碼錯誤');} },
-        async renderRedeemed() { await this.setStage('stage-cine'); this.setMood('SECRET'); document.getElementById('main-bg').src = "https://i.meee.com.tw/oD2jGIm.jpg"; document.getElementById('cine-db').style.display = "flex"; document.getElementById('cine-txt').innerHTML = `<div style="font-size:1.3rem;color:var(--accent);border:2.1px solid var(--accent);padding:10px;transform:rotate(-5deg);margin-bottom:20px;width:fit-content;margin-left:auto;margin-right:auto;">已成功核銷</div><p style="color:#fff;">感謝您一起完成這次任務！</p>`; },
-        setMood(mood) { const el = document.getElementById('stage-cine').classList.contains('active') ? document.getElementById('cine-actor') : document.getElementById('gp-actor'); if(el && mood) { el.src = ICONS[mood]; el.classList.add('visible'); } },
-        async say(id, str, mood = null) { if(mood) this.setMood(mood); const el = document.getElementById(id); el.classList.remove('fade-in'); void el.offsetWidth; el.innerHTML = str; el.classList.add('fade-in'); await new Promise(r => setTimeout(r, 600)); },
-        sayGP(s, mood = null) { return this.say('gp-txt', s, mood); },
-        runAutoSeq(mode, lines, cb, interval = 2800) {
-            this.state.isBusy = true; const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt'; const db = document.getElementById(mode === 'CINE' ? 'cine-db' : 'gp-db'); const tip = document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip');
-            if(tip) tip.style.display = "none"; db.style.display = "flex"; db.onclick = null;
-            let q = [...lines];
-            const next = async () => { if (q.length > 0) { const l = q.shift(); await this.say(txtId, l.t, l.m); this.state.autoTimer = setTimeout(() => { if (q.length > 0) next(); else { this.state.isBusy = false; if(cb) cb(); } }, interval); } }; next();
-        },
-        runManualSeq(mode, lines, cb) {
-            this.state.isBusy = false; const db = document.getElementById(mode === 'CINE' ? 'cine-db' : 'gp-db'); const txtId = mode === 'CINE' ? 'cine-txt' : 'gp-txt'; const tip = document.getElementById(mode === 'CINE' ? 'cine-tip' : 'gp-tip');
-            let q = [...lines]; db.style.display = "flex";
-            const next = async () => { if(tip) tip.style.display = 'none'; const l = q.shift(); await this.say(txtId, l.t, l.m); if (q.length > 0) { db.onclick = next; if(tip) tip.style.display = "block"; } else { db.onclick = cb; if(tip) tip.style.display = "block"; } }; next();
-        },
-        updateProg() { const bar = document.getElementById('prog-bar'); bar.innerHTML = ""; for(let i=0; i<6; i++) { const u = document.createElement('div'); u.className = 'prog-unit' + (i < this.state.solved.length ? ' filled' : ''); bar.appendChild(u); } document.getElementById('prog-text').innerText = `手稿回收進度 ${this.state.solved.length}/6`; localStorage.setItem('manuscript_solved', JSON.stringify(this.state.solved)); }
-    };
 
-    // [新增音頻修復邏輯]
-    document.addEventListener("visibilitychange", function() {
-        const bgm = document.getElementById('bgm');
-        if (!bgm) return;
+        renderRedeemed() {
+            document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_03.jpg";
+            this.setMood('SECRET'); document.getElementById('gp-db').style.display = "flex";
+            document.getElementById('gp-txt').innerHTML = `兌換時間：10:00 - 12:00、17:00 - 19:00<br>請記得要去2F領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
+        },
 
-        if (document.hidden) {
-            // 用戶離開頁面（包括關閉 LINE 視窗），暫停 BGM
-            bgm.pause();
-        } else {
-            // 用戶重新回到頁面
-            if (bgm.paused && Game.state.solved.length < 6) {
-                bgm.play().catch(()=>{}); // 嘗試恢復播放，除非用戶已手動重設或通關
+        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"去找找寶箱吧！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
+        setMood(mood) { const el = document.getElementById('gp-actor'); if (el && mood) { el.src = ICONS[mood]; el.classList.add('visible'); } },
+        async sayLine(text, mood) { this.setMood(mood); const el = document.getElementById('gp-txt'); document.getElementById('gp-db').style.display = "flex"; el.innerHTML = text; el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); },
+        runAutoSeqManual(script, cb) { 
+            this.state.isBusy = true; let q = [...script];
+            const next = async () => {
+                if (q.length > 0) { const item = q.shift(); await this.sayLine(item.t, item.m); this.state.autoTimer = setTimeout(next, item.d || 2500); } else { this.state.isBusy = false; if(cb) cb(); }
+            }; next(); 
+        },
+        updateProg() {
+            const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
+            for(let i=0; i<6; i++) {
+                const u = document.createElement('div'); u.style.flex = "1"; u.style.height = "100%"; u.style.background = i < this.state.solved.length ? 'var(--accent)' : 'rgba(255,255,255,0.2)';
+                bar.appendChild(u);
             }
+            document.getElementById('prog-text').innerText = `手稿回收進度 ${this.state.solved.length}/6`;
         }
-    });
-
+    };
 </script>
 </body>
 </html>
