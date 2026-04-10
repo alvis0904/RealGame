@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 LOST TREASURE</title>
+    <title>找尋失落的手稿 | Official Final V136</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
@@ -93,12 +93,12 @@
     const ICONS = { HELLO: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/hello.png', SOB: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/sob.png', CRY: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/cry.png', THANKS: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/thanks.png', SECRET: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/secret.png', DOUBT: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/doubt.png', FIND: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/find.png', READ: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/read.png' };
 
     const stationData = [
-        {id:0, name:'泉', f:'1F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/spring-01.jpg', intro: "(UserName)，您知道嗎？ / 北投擁有青磺、白磺與鐵磺三種泉質， / 在這裡，有一處開放給所有人的空間... / 旅人、居民、甚至路過的遊客， / 都能在這裡稍作歇息...", solve: "飯店的泉質是少見的白磺溫泉， / 乳白色澤帶有淡淡硫磺氣味。 / 我們希望透過這座足湯， / 串起與旅人、鄰里更深的連結！", care: "手稿已經拿到了， / 我們快去其它地方找找剩下的線索吧！"},
-        {id:1, name:'紋', f:'1F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/pattern-01.jpg', intro: "時間會留下痕跡， / 自然會形成紋理， / 我感覺到手稿就在這附近…", solve: "設計師將自然元素， / 轉化為空間中的紋理， / 也別忘了欣賞這些設計巧思喔！", care: "這附近的線索已經收集完囉！ / 我們出發去下一站吧！"},
-        {id:2, name:'煙', f:'2F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/smoke-01.jpg', intro: "在新北投的街道上， / 有時會看到地面冒出煙霧。 / 那變成了藝術創作的靈感喔！ / 大廳裡有一幅作品， / 似乎藏著線索…", solve: "這幅作品名叫雲霧繚繞的那個清晨， / 描繪北投的煙霧與記憶， / 不過… / 說不定真的有女巫存在呢？", care: "女巫的煙霧似乎散去了... / 我們再去別的樓層看看吧！"},
-        {id:3, name:'織', f:'2F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/weave-01.jpg', intro: "一橫一豎，一粗一細， / 交織成一段故事... / 北投晶泉丰旅的一周年， / 也是與旅人一同織出的回憶。", solve: "Gallery 泉咏是旅程的起點， / 也是回憶開始的地方， / 在這個空間裡， / 設計師使用交錯的手法營造氛圍， / 不同時間來， / 都會有不一樣的感受喔！", care: "(UserName)，謝謝您幫我找回這份手稿。 / 我們快去尋找下一份手稿吧！"},
-        {id:4, name:'浸', f:'5F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/soak-01.jpg', intro: "飯店除了有獨立湯屋外， / 還能預約SPA體驗， / 我想，這裡應該也會有線索…", solve: "在這裡，有許多類型的湯屋， / 每一間都能享受白磺溫泉， / 期待藉由沉浸湯泉、徹底療癒身心， / 這也是設計師規劃空間的初衷。", care: "手稿已經拿到了， / 這裡的氛圍真讓人身心放鬆..."},
-        {id:5, name:'岩', f:'6F', code:'1234', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/rock-01.jpg', intro: "是不是很少到六樓來？ / 這裡的石材與光影， / 像是來自大地深處... / 噓...要小聲一點喔… / 別吵醒沉睡的熔岩了…", solve: "岩，象徵著安定與寧靜， / 設計師希望、在溫泉與芳療之間， / 旅人的身心能慢慢沉靜下來。", care: "這裡的線索我們已經拿到了， / 讓我們安靜地前往下一個地方吧。"}
+        {id:0, name:'泉', f:'1F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/spring-01.jpg', intro: "(UserName)，您知道嗎？ / 北投擁有青磺、白磺與鐵磺三種泉質， / 在這裡，有一處開放給所有人的空間... / 旅人、居民、甚至路過的遊客， / 都能在這裡稍作歇息...", solve: "飯店的泉質是少見的白磺溫泉， / 乳白色澤帶有淡淡硫磺氣味。 / 我們希望透過這座足湯， / 串起與旅人、鄰里更深的連結！", care: "手稿已經拿到了， / 我們快去其它地方找找剩下的線索吧！"},
+        {id:1, name:'紋', f:'1F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/pattern-01.jpg', intro: "時間會留下痕跡， / 自然會形成紋理， / 我感覺到手稿就在這附近…", solve: "設計師將自然元素， / 轉化為空間中的紋理， / 也別忘了欣賞這些設計巧思喔！", care: "這附近的線索已經收集完囉！ / 我們出發去下一站吧！"},
+        {id:2, name:'煙', f:'2F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/smoke-01.jpg', intro: "在新北投的街道上， / 有時會看到地面冒出煙霧。 / 那變成了藝術創作的靈感喔！ / 大廳裡有一幅作品， / 似乎藏著線索…", solve: "這幅作品名叫雲霧繚繞的那個清晨， / 描繪北投的煙霧與記憶， / 不過… / 說不定真的有女巫存在呢？", care: "女巫的煙霧似乎散去了... / 我們再去別的樓層看看吧！"},
+        {id:3, name:'織', f:'2F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/weave-01.jpg', intro: "一橫一豎，一粗一細， / 交織成一段故事... / 北投晶泉丰旅的一周年， / 也是與旅人一同織出的回憶。", solve: "Gallery 泉咏是旅程的起點， / 也是回憶開始的地方， / 在這個空間裡， / 設計師使用交錯的手法營造氛圍， / 不同時間來， / 都會有不一樣的感受喔！", care: "(UserName)，謝謝您幫我找回這份手稿。 / 我們快去尋找下一份手稿吧！"},
+        {id:4, name:'浸', f:'5F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/soak-01.jpg', intro: "飯店除了有獨立湯屋外， / 還能預約SPA體驗， / 我想，這裡應該也會有線索…", solve: "在這裡，有許多類型的湯屋， / 每一間都能享受白磺溫泉， / 期待藉由沉浸湯泉、徹底療癒身心， / 這也是設計師規劃空間的初衷。", care: "手稿已經拿到了， / 這裡的氛圍真讓人身心放鬆..."},
+        {id:5, name:'岩', f:'6F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/rock-01.jpg', intro: "是不是很少到六樓來？ / 這裡的石材與光影， / 像是來自大地深處... / 噓...要小聲一點喔… / 別吵醒沉睡的熔岩了…", solve: "岩，象徵著安定與寧靜， / 設計師希望、在溫泉與芳療之間， / 旅人的身心能慢慢沉靜下來。", care: "這裡的線索我們已經拿到了， / 讓我們安靜地前往下一個地方吧。"}
     ];
 
     const Game = {
@@ -148,7 +148,7 @@
 
         async submitName() {
             const val = document.getElementById('p-name').value.trim();
-            if(!val) { alert("請輸入您的姓名才能開始冒險喔！"); return; }
+            if(!val) { alert("請輸入您的姓名才能開始任務喔！"); return; }
             this.state.userName = val; localStorage.setItem('user_name', val);
             await this.showLoading(); this.renderMap();
         },
@@ -335,10 +335,10 @@ async finalSpeeches() {
         renderRedeemed() {
             document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_03.jpg";
             this.setMood('SECRET'); document.getElementById('gp-db').style.display = "flex";
-            document.getElementById('gp-txt').innerHTML = `兌換時間：10:00 - 14:00、16:00 - 20:00<br>請記得要去2F領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
+            document.getElementById('gp-txt').innerHTML = `兌換時間：10:00 - 14:00、16:00 - 20:00<br>請記得要去櫃檯領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
         },
 
-        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"去找找寶箱吧！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
+        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"找找看神秘的書本，可能藏著線索！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
 
         updateProg() {
             const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
