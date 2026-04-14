@@ -3,50 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>找尋失落的手稿 | Official Final V136</title>
+    <title>找尋失落的手稿 Missing Scripts</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2c2c2c; --accent: #8e7341; --rpg-bg: rgba(18, 18, 18, 0.98); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Noto Serif TC', serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
         #viewport { width: 100%; height: 100dvh; background-color: #000; position: relative; overflow: hidden; }
-        
         .bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; z-index: 1; transition: opacity 1.5s; }
         .bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2; transition: opacity 1.5s; }
-        
         #fade-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 110000; pointer-events: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100000; display: none; align-items: center; justify-content: center; flex-direction: column; opacity: 0; transition: opacity 0.8s; }
         #loading-screen.active { display: flex; opacity: 1; }
-
         .stage-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; }
         .stage-layer.active { display: block !important; }
-
         .actor-slot { position: absolute; z-index: 90000; pointer-events: none; opacity: 0; transition: opacity 0.6s ease-in-out; }
         .actor-slot.active { opacity: 1; }
         .cine-mode .actor-slot { bottom: 21vh; left: 50%; transform: translateX(-50%); width: 310px; height: 310px; }
         .gp-mode .actor-slot { bottom: 21.5vh; left: 10px; width: 180px; height: 180px; transform: none; }
-
         .actor-img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.4s; }
         .actor-img.visible { opacity: 1 !important; visibility: visible !important; }
-
         .gp-footer { position: absolute; bottom: 20px; left: 4%; width: 92%; min-height: 140px; background: var(--rpg-bg); border: 2.1px solid var(--accent); border-radius: 18px; z-index: 85000; padding: 20px; display: none; align-items: center; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         .text-body { font-size: 0.95rem; line-height: 1.8; color: #ffffff; width: 100%; }
-
         .img-container { width: 100vw; aspect-ratio: 1/1; position: absolute; top: 8vh; left:0; z-index: 5; display: none; background: transparent; transition: opacity 1s; }
         .main-img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) blur(10px); opacity: 0; transition: opacity 2s; }
         .main-img.revealed { filter: none !important; opacity: 1 !important; transition: opacity 3s; }
-
         .map-grid { position: absolute; top: 12vh; left: 7.5%; width: 85%; z-index: 50000; display: flex; flex-direction: column; gap: 10px; }
         .node { height: 48px; background: rgba(255,255,255,0.95); border: 1px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .node .slash { font-size: 0.6em; margin: 0 8px; color: #bbb; }
         .node.solved { background: var(--accent); color: #fff; border-color: var(--accent); }
-
         .rpg-btn { display: inline-block; padding: 12px 45px; border: none; background: var(--accent); color: #fff; font-weight: 700; border-radius: 50px; cursor: pointer; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
         .rpg-btn:active { transform: translateY(2px); }
-        
+        .rpg-btn.outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); margin-top: 10px; padding: 10px 30px; }
         .puzz-box { position: fixed; top: 8vh; left:0; width:100vw; aspect-ratio: 1/1; z-index: 70000; pointer-events: none; opacity: 0; transition: opacity 1.5s; }
         .puzz-piece { position: absolute; width: 33.33%; height: 50%; background-size: cover; background-position: center; transition: all 3.5s cubic-bezier(0.25, 0.1, 0.25, 1); opacity: 0; }
-
         .cmd-win { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 88%; background:#fff; border: 3px solid var(--primary); padding: 25px; z-index: 99000; display: none; border-radius: 12px; text-align: center; }
         .cmd-input { width: 100%; border: none; border-bottom: 2.5px solid var(--accent); padding: 10px; text-align: center; font-size: 1.8rem; margin-bottom: 20px; outline:none; }
     </style>
@@ -61,14 +51,12 @@
 <div id="viewport">
     <img id="main-bg" src="https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_01.jpg" class="bg-layer">
     <div id="overlay" class="bg-overlay"></div>
-    
     <div id="stage-init" class="stage-layer active">
         <div style="position:fixed; bottom:12vh; left:0; width:100%; display:flex; flex-direction:column; align-items:center; z-index:9999;">
             <div class="rpg-btn" onclick="Game.boot()">進入遊戲 ENTER</div>
             <div style="color:#fff; opacity:0.3; font-size:0.55rem; text-decoration:underline; cursor:pointer; margin-top:20px;" onclick="Game.reset()">[ 重置遊戲進度 ]</div>
         </div>
     </div>
-    
     <div id="stage-main" class="stage-layer">
         <div id="gp-header" style="position:absolute; top:35px; width:100%; padding:0 20px; z-index:95000; display:none;">
             <div id="prog-text" style="font-size:0.65rem; color:var(--accent); font-weight:700;">手稿回收進度 0/6</div>
@@ -86,19 +74,30 @@
     <h3 id="cmd-title" style="margin-top:0; color:var(--primary);">輸入密碼</h3>
     <input type="tel" id="p-input" class="cmd-input" maxlength="4" placeholder="••••" inputmode="numeric">
     <div id="confirm-btn" class="rpg-btn" onclick="Game.handleConfirm()">確認驗證</div>
+    <div id="back-btn" class="rpg-btn outline" onclick="Game.cancelExplore()">返回地圖</div>
     <div id="hint-btn" style="color:var(--accent); font-size:0.8rem; margin-top:15px; text-decoration:underline; cursor:pointer;" onclick="Game.showHint()">【需要提示嗎？】</div>
 </div>
 
 <script>
-    const ICONS = { HELLO: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/hello.png', SOB: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/sob.png', CRY: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/cry.png', THANKS: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/thanks.png', SECRET: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/secret.png', DOUBT: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/doubt.png', FIND: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/find.png', READ: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/read.png' };
+    const ICONS = { 
+        HELLO: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/hello.png', 
+        SOB: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/sob.png', 
+        CRY: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/cry.png', 
+        THANKS: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/thanks.png', 
+        SECRET: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/secret.png', 
+        DOUBT: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/doubt.png', 
+        FIND: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/find.png', 
+        READ: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/read.png',
+        SHY: 'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/02-icon/shy.png'
+    };
 
     const stationData = [
-        {id:0, name:'泉', f:'1F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/spring-01.jpg', intro: "(UserName)，您知道嗎？ / 北投擁有青磺、白磺與鐵磺三種泉質， / 在這裡，有一處開放給所有人的空間... / 旅人、居民、甚至路過的遊客， / 都能在這裡稍作歇息...", solve: "飯店的泉質是少見的白磺溫泉， / 乳白色澤帶有淡淡硫磺氣味。 / 我們希望透過這座足湯， / 串起與旅人、鄰里更深的連結！", care: "手稿已經拿到了， / 我們快去其它地方找找剩下的線索吧！"},
-        {id:1, name:'紋', f:'1F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/pattern-01.jpg', intro: "時間會留下痕跡， / 自然會形成紋理， / 我感覺到手稿就在這附近…", solve: "設計師將自然元素， / 轉化為空間中的紋理， / 也別忘了欣賞這些設計巧思喔！", care: "這附近的線索已經收集完囉！ / 我們出發去下一站吧！"},
-        {id:2, name:'煙', f:'2F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/smoke-01.jpg', intro: "在新北投的街道上， / 有時會看到地面冒出煙霧。 / 那變成了藝術創作的靈感喔！ / 大廳裡有一幅作品， / 似乎藏著線索…", solve: "這幅作品名叫雲霧繚繞的那個清晨， / 描繪北投的煙霧與記憶， / 不過… / 說不定真的有女巫存在呢？", care: "女巫的煙霧似乎散去了... / 我們再去別的樓層看看吧！"},
-        {id:3, name:'織', f:'2F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/weave-01.jpg', intro: "一橫一豎，一粗一細， / 交織成一段故事... / 北投晶泉丰旅的一周年， / 也是與旅人一同織出的回憶。", solve: "Gallery 泉咏是旅程的起點， / 也是回憶開始的地方， / 在這個空間裡， / 設計師使用交錯的手法營造氛圍， / 不同時間來， / 都會有不一樣的感受喔！", care: "(UserName)，謝謝您幫我找回這份手稿。 / 我們快去尋找下一份手稿吧！"},
-        {id:4, name:'浸', f:'5F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/soak-01.jpg', intro: "飯店除了有獨立湯屋外， / 還能預約SPA體驗， / 我想，這裡應該也會有線索…", solve: "在這裡，有許多類型的湯屋， / 每一間都能享受白磺溫泉， / 期待藉由沉浸湯泉、徹底療癒身心， / 這也是設計師規劃空間的初衷。", care: "手稿已經拿到了， / 這裡的氛圍真讓人身心放鬆..."},
-        {id:5, name:'岩', f:'6F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/rock-01.jpg', intro: "是不是很少到六樓來？ / 這裡的石材與光影， / 像是來自大地深處... / 噓...要小聲一點喔… / 別吵醒沉睡的熔岩了…", solve: "岩，象徵著安定與寧靜， / 設計師希望、在溫泉與芳療之間， / 旅人的身心能慢慢沉靜下來。", care: "這裡的線索我們已經拿到了， / 讓我們安靜地前往下一個地方吧。"}
+        {id:2, name:'煙', f:'1F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/smoke-01.jpg', intro: "在新北投的街道上， / 有時會看到路旁的水孔蓋冒出煙霧， / 這景色也是設計的靈感喔！ / 在這裡... / 有個地方能感受溫泉氤氳的煙霧， / 我們一起去找找看...", solve: "大眾風呂融入了北投的人文地景， / 彷彿被大地擁抱中泡湯， / 不過，在這片煙霧中⋯ / 說不定真的有女巫存在呢？", care: "女巫的煙霧似乎散去了... / 我們再去別的樓層看看吧！"},
+        {id:3, name:'織', f:'2F', code:'2', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/weave-01.jpg', intro: "一橫一豎，一粗一細， / 交織成一段故事... / 北投晶泉丰旅的一周年， / 也是與旅人一同織出的回憶... / 大廳有位翩翩起舞的少女， / 我們一起過去找找吧！", solve: "一走進大廳， / 會有美麗的文心蘭迎接旅人， / 象徵逐漸到來的幸福， / 期待您在旅途中能獲得愉快的回憶！", care: "(UserName)，謝謝您幫我找回這份手稿。 / 我們快去尋找下一份手稿吧！"},
+        {id:1, name:'紋', f:'2F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/pattern-01.jpg', intro: "時間會留下痕跡， / 自然會形成紋理， / 在這裡… / 織物、木頭與光影有不同的紋路， / 還記得辦理入住的地方嗎？ / 那裡好像有什麼線索...", solve: "Gallery 泉咏是旅程的起點， / 也是回憶累積的場域， / 每一季都有藝術家在此策展， / 與旅人分享不同的創作與靈感， / 歡迎有機會與藝術家交流喔！", care: "這附近的線索已經收集完囉！ / 我們出發去下一站吧！"},
+        {id:0, name:'泉', f:'2F', code:'1', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/spring-01.jpg', intro: "(UserName)，您知道嗎？ / 北投擁有青磺、白磺與鐵磺三種泉質， / 在這裡，有一處開放給所有人的空間... / 那裡說不定能找到手稿， / 可以帶我一起去找找嗎？", solve: "飯店的泉質是少見的白磺溫泉， / 乳白色澤帶有淡淡硫磺氣味。 / 我們希望透過這座足湯， / 串起與旅人、鄰里更深的連結！", care: "手稿已經拿到了， / 快去其它地方找找剩下的線索吧！"},
+        {id:4, name:'浸', f:'5F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/soak-01.jpg', intro: "飯店除了有獨立湯屋外， / 還能預約SPA體驗， / 我想，這裡應該也會有線索…", solve: "在這裡，有許多類型的湯屋， / 每一間都能享受白磺溫泉， / 沉浸氤氳湯泉、徹底療癒身心， / 這也是設計師規劃空間的初衷。", care: "手稿已經拿到了， / 這裡的氛圍真讓人身心放鬆..."},
+        {id:5, name:'岩', f:'6F', code:'3', img:'https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/03-puzzle/rock-01.jpg', intro: "是不是很少到六樓來？ / 這裡的石材與光影， / 像是來自大地深處... / 噓！要小聲一點喔… / 別吵醒沉睡的熔岩了… / 有一份手稿好像藏在熔岩附近， / 可以幫我找找看嗎？", solve: "岩，象徵著安定與寧靜， / 設計師希望、在溫泉與芳療之間， / 旅人的身心能慢慢沉靜下來。", care: "這裡的線索我們已經拿到了， / 讓我們安靜地前往下一個地方吧。"}
     ];
 
     const Game = {
@@ -129,10 +128,21 @@
             document.body.className = "cine-mode";
             document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_02.jpg";
             const script = [
-                {t:"親愛的旅人，",m:"HELLO"},{t:"歡迎來到北投晶泉丰旅，",m:"HELLO"},{t:"我是飯店管家--小晶，",m:"HELLO"},{t:"很開心與您一起慶祝飯店一周年。",m:"HELLO"},
-                {t:"您知道嗎？",m:"SECRET"},{t:"這棟建築裡，藏著許多設計師留下的秘密…",m:"SECRET"},
-                {t:"但是…",m:"SOB"},{t:"我在整理資料時，",m:"SOB"},{t:"不小心把珍貴的手稿弄丟了…",m:"SOB"},
-                {t:"(啜泣) 嗚哇哇哇…",m:"CRY",d:5000},{t:"好心的旅人，",m:"SOB"},{t:"您願意陪我一起找回來嗎？",m:"SOB"}
+                {t:"親愛的旅人，", m:"HELLO"},
+                {t:"歡迎來到北投晶泉丰旅，", m:"HELLO"},
+                {t:"我是飯店管家--小晶，", m:"HELLO"},
+                {t:"很開心與您一起慶祝飯店一周年！", m:"HELLO"},
+                {t:"您知道嗎？", m:"SECRET"},
+                {t:"這棟飯店、是設計師精心打造的作品，", m:"SECRET"},
+                {t:"這次想透過週年活動之際，", m:"SECRET"},
+                {t:"與大家分享其中的秘密，", m:"SECRET"},
+                {t:"但是...", m:"SHY"},
+                {t:"我在整理資料時，", m:"SHY"},
+                {t:"不小心把珍貴的手稿弄丟了...", m:"SHY"},
+                {t:"(啜泣) 嗚嗚嗚...", m:"SOB", d:4500},
+                {t:"(啜泣) 嗚哇哇哇...", m:"CRY", d:4500},
+                {t:"好心的旅人，", m:"SOB"},
+                {t:"您願意陪我一起找回來嗎？", m:"SOB"}
             ];
             this.runAutoSeqManual(script, () => {
                 document.getElementById('gp-txt').innerHTML = `<div class="rpg-btn" onclick="Game.askName()">我很樂意幫忙！</div>`;
@@ -140,7 +150,10 @@
         },
 
         askName() {
-            this.runAutoSeqManual([{t:"太感謝您了！",m:"THANKS"},{t:"我要怎麼稱呼您？",m:"THANKS"}], () => {
+            this.runAutoSeqManual([
+                {t:"太感謝您了！", m:"THANKS"},
+                {t:"我要怎麼稱呼您？", m:"THANKS"}
+            ], () => {
                 const existing = this.state.userName ? `value="${this.state.userName}"` : "";
                 document.getElementById('gp-txt').innerHTML = `<div style="margin-top:10px;"><input type="text" id="p-name" placeholder="請輸入姓名" ${existing} style="background:transparent;border:none;border-bottom:2px solid #fff;color:#fff;text-align:center;width:180px;font-size:1.1rem;padding:5px;" autocomplete="off"><br><button class="rpg-btn" onclick="Game.submitName()" style="margin-top:15px;">確認</button></div>`;
             });
@@ -160,11 +173,10 @@
             document.getElementById('gp-db').style.display = "flex";
             document.getElementById('gp-header').style.display = "block";
             this.updateProg();
-
             if(this.state.isRedeemed) { this.renderRedeemed(); return; }
             if(this.state.solved.length === 6) { 
                 this.renderFullMapUI();
-                this.runAutoSeqManual([{t: "太好了，手稿任務已經全部完成了！", m: "THANKS"}], () => {
+                this.runAutoSeqManual([{t: "太好了，手稿已經全部找齊了！", m: "THANKS"}], () => {
                     document.getElementById('map-area').innerHTML = ""; this.finalSequence(); 
                 });
                 return; 
@@ -183,22 +195,17 @@
             mapArea.innerHTML = html + `</div>`;
         },
 
-        // 偵測同樓層與已通關邏輯
         async handleMove(idx) {
             if (this.state.isBusy) return;
             const data = stationData.find(s => s.id === idx);
             const isSameFloor = (this.state.currentFloor === data.f);
             const isSolved = this.state.solved.includes(idx);
-
-            // 已通關：不轉背景、不 Loading，直接講 care
             if (isSolved) {
                 this.state.currentFloor = data.f;
                 const mood = (data.id === 5) ? "SECRET" : (data.id === 3 ? "THANKS" : "HELLO");
                 this.runAutoSeqManual(this.parseLines(data.care, mood), () => this.renderMap());
                 return;
             }
-
-            // 同樓層：不 Loading，地圖講話後進入
             if (isSameFloor) {
                 this.runAutoSeqManual([{t: "這層樓好像還有未解的線索！", m: "FIND"}], () => this.enterLocation(data));
             } else {
@@ -214,12 +221,19 @@
             const canvas = document.getElementById('gp-canvas');
             canvas.style.display = "block"; canvas.style.opacity = "1";
             canvas.innerHTML = `<img id="sk-img" class="main-img" src="${data.img}">`;
-            
             const mood = (data.id === 5) ? "SECRET" : "READ";
-            this.runAutoSeqManual(this.parseLines(data.intro, mood), () => this.popInput());
+            // 重要：在此確保對話序列完成後會開啟輸入視窗
+            this.runAutoSeqManual(this.parseLines(data.intro, mood), () => {
+                this.popInput();
+            });
         },
 
-        // 自動斷句解析器
+        cancelExplore() {
+            if (this.state.isBusy) return;
+            document.getElementById('cmd-win').style.display = "none";
+            this.renderMap();
+        },
+
         parseLines(rawText, defaultMood) {
             const lines = rawText.replace(/\(UserName\)/g, this.state.userName).split(' / ');
             return lines.map(l => ({ t: l.trim(), m: defaultMood }));
@@ -235,6 +249,7 @@
                     await this.sayLine(item.t, item.m); 
                     this.state.autoTimer = setTimeout(next, item.d || 2500); 
                 } else { 
+                    // 關鍵修正：確保重設 Busy 狀態後再呼叫 cb
                     this.state.isBusy = false; 
                     if(cb) cb(); 
                 } 
@@ -253,31 +268,60 @@
         },
 
         setMood(mood) { const el = document.getElementById('gp-actor'); if (el && mood) { el.src = ICONS[mood]; el.classList.add('visible'); } },
-
-        popInput() { setTimeout(() => { document.getElementById('p-input').value = ""; document.getElementById('cmd-win').style.display = "block"; }, 500); },
+        
+        popInput() { 
+            // 強制重設 Busy 並顯示輸入視窗
+            this.state.isBusy = false; 
+            document.getElementById('back-btn').style.display = "inline-block"; 
+            document.getElementById('p-input').maxLength = (this.state.curIdx === -1) ? 4 : 1;
+            document.getElementById('p-input').placeholder = (this.state.curIdx === -1) ? "••••" : "•";
+            setTimeout(() => { 
+                document.getElementById('p-input').value = ""; 
+                document.getElementById('cmd-win').style.display = "block"; 
+                document.getElementById('p-input').focus();
+            }, 300); 
+        },
 
         handleConfirm() {
             const input = document.getElementById('p-input').value;
             if(this.state.curIdx === -1) {
-                if(input === '0415') { this.state.isRedeemed = true; localStorage.setItem('is_redeemed', 'true'); document.getElementById('cmd-win').style.display = 'none'; this.showLoading().then(()=>this.renderRedeemed()); } else alert('密碼錯誤');
+                if(input === '0415') { 
+                    this.state.isRedeemed = true; 
+                    localStorage.setItem('is_redeemed', 'true'); 
+                    document.getElementById('cmd-win').style.display = 'none'; 
+                    this.showLoading().then(()=>this.renderRedeemed()); 
+                } else alert('密碼錯誤');
             } else {
-                if (input === stationData.find(s=>s.id===this.state.curIdx).code) { document.getElementById('cmd-win').style.display = "none"; this.solveSuccess(); }
-                else { this.runAutoSeqManual([{t:"嗯…好像不是這個答案，", m:"DOUBT"},{t:"我們再試試看！", m:"DOUBT"}]); }
+                if (input === stationData.find(s=>s.id===this.state.curIdx).code) { 
+                    document.getElementById('cmd-win').style.display = "none"; 
+                    this.solveSuccess(); 
+                } else { 
+                    this.runAutoSeqManual([{t:"嗯…好像不是這個答案，", m:"DOUBT"},{t:"我們再試試看！", m:"DOUBT"}]); 
+                }
             }
         },
 
         async solveSuccess() {
             document.getElementById('se-success').play().catch(()=>{});
-            if(!this.state.solved.includes(this.state.curIdx)) { this.state.solved.push(this.state.curIdx); localStorage.setItem('solved_ids', JSON.stringify(this.state.solved)); }
+            if(!this.state.solved.includes(this.state.curIdx)) { 
+                this.state.solved.push(this.state.curIdx); 
+                localStorage.setItem('solved_ids', JSON.stringify(this.state.solved)); 
+            }
             document.getElementById('sk-img').classList.add('revealed');
-            this.runAutoSeqManual([{t:"(灑花)找到了珍貴的手稿了！",m:"THANKS"}], () => {
+            this.runAutoSeqManual([{t:"(灑花) 找到珍貴的手稿了！",m:"THANKS"}], () => {
                 const data = stationData.find(s=>s.id===this.state.curIdx);
-                const mood = (data.id === 2) ? "SECRET" : "HELLO";
-                setTimeout(() => { this.runAutoSeqManual(this.parseLines(data.solve, mood), async () => { await new Promise(r => setTimeout(r, 3500)); await this.showLoading(); this.renderMap(); }); }, 2000);
+                const mood = (data.id === 2 || data.id === 5) ? "SECRET" : "HELLO";
+                setTimeout(() => { 
+                    this.runAutoSeqManual(this.parseLines(data.solve, mood), async () => { 
+                        await new Promise(r => setTimeout(r, 3500)); 
+                        await this.showLoading(); 
+                        this.renderMap(); 
+                    }); 
+                }, 2000);
             });
         },
 
-        async finalSequence() { this.runAutoSeqManual([{t: "太好了，終於找到所有手稿了！", m: "THANKS"}], () => { this.startAssemblyAnimation(); }); },
+        async finalSequence() { this.runAutoSeqManual([{t: "(感動) 真的是好不容易！", m: "THANKS"}], () => { this.startAssemblyAnimation(); }); },
 
         async startAssemblyAnimation() {
             const box = document.getElementById('puzz-box'); box.style.opacity = "1";
@@ -297,27 +341,22 @@
             }, 6000); 
         },
 
-// 建議修改 finalSpeeches 的實作方式
-async finalSpeeches() {
-    const finalScript = [
-        {t: "這就是最後一張手稿，", m: "HELLO"},
-        {t: "也是飯店的大廳，", m: "HELLO"},
-        {t: "在這個空間裡，", m: "READ"},
-        {t: "體現了煙、泉、浸、織、紋、岩六大精神。", m: "READ"},
-        {t: `${this.state.userName}，謝謝您，`, m: "THANKS"},
-        {t: "陪我完成這趟旅程…", m: "THANKS"},
-        {t: "這樣飯店周年活動能順利進行了！", m: "THANKS"},
-        {t: "為了表達感謝，", m: "THANKS"},
-        {t: "我準備了一點小心意，", m: "HELLO"},
-        {t: "希望您會喜歡！", m: "HELLO"},
-        {t: "噓…不要告訴總經理喔！", m: "SECRET"}
-    ];
-    // 直接調用 runAutoSeqManual，不再透過 parseLines 以便精確控制表情
-    this.runAutoSeqManual(finalScript, () => { 
-        this.state.curIdx = -1; 
-        this.renderRedeemUI(); 
-    });
-},
+        async finalSpeeches() {
+            const finalScript = [
+                {t: "這就是最後一張手稿，", m: "HELLO"},
+                {t: "也是飯店的大廳，", m: "HELLO"},
+                {t: "在這個空間裡，", m: "READ"},
+                {t: "體現了煙、泉、浸、織、紋、岩六大精神。", m: "READ"},
+                {t: `${this.state.userName}，謝謝您，`, m: "THANKS"},
+                {t: "陪我完成這趟旅程…", m: "THANKS"},
+                {t: "這樣飯店周年活動能順利進行了！", m: "THANKS"},
+                {t: "為了表達感謝，", m: "HELLO"},
+                {t: "我準備了一點小心意，", m: "HELLO"},
+                {t: "希望您會喜歡！", m: "HELLO", d:4500},
+                {t: "噓…不要告訴總經理喔！", m: "SECRET"}
+            ];
+            this.runAutoSeqManual(finalScript, () => { this.state.curIdx = -1; this.renderRedeemUI(); });
+        },
 
         async renderRedeemUI() {
             await this.showLoading();
@@ -329,16 +368,20 @@ async finalSpeeches() {
         openRedeemWin() {
             document.getElementById('cmd-title').innerText = "櫃台人員核銷";
             document.getElementById('hint-btn').style.display = "none";
+            document.getElementById('back-btn').style.display = "none"; 
+            document.getElementById('p-input').placeholder = "••••";
+            document.getElementById('p-input').maxLength = 4; 
             document.getElementById('cmd-win').style.display = "block";
+            document.getElementById('p-input').focus();
         },
 
         renderRedeemed() {
             document.getElementById('main-bg').src = "https://jiaoxi.wellspringbysilks.com/silksspringfile/Wellspring/Beitou/Anniversary/01-bg/bg_03.jpg";
             this.setMood('SECRET'); document.getElementById('gp-db').style.display = "flex";
-            document.getElementById('gp-txt').innerHTML = `兌換時間：10:00 - 14:00、16:00 - 20:00<br>請記得要去櫃檯領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
+            document.getElementById('gp-txt').innerHTML = `<br>請記得要去2F領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
         },
 
-        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"找找看神秘的書本，可能藏著線索！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
+        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"去找找寶箱吧！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
 
         updateProg() {
             const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
