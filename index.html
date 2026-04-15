@@ -381,7 +381,7 @@
             document.getElementById('gp-txt').innerHTML = `<br>請記得要去2F領獎喔！<br><br><span style='color:var(--accent); font-weight:700;'>[ 已完成兌獎 ]</span>`;
         },
 
-        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"去找找神秘的書本吧！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
+        showHint() { document.getElementById('cmd-win').style.display = "none"; this.runAutoSeqManual([{t:"注意神秘的書本或牆上吧！",m:"FIND"}], () => document.getElementById('cmd-win').style.display = "block"); },
 
         updateProg() {
             const bar = document.getElementById('prog-bar'); bar.innerHTML = "";
